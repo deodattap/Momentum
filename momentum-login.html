@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Momentum — Log In</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAF7F0; --ink:#1C1B1A; --ink-soft:#6B6862; --ink-faint:#A6A29B;
+    --coral:#FF6B4A; --coral-dark:#E8501F;
+    --peri:#C7C0EE; --pink:#F5C6CE; --sage:#BFD9B4; --yellow:#F6E29B;
+    --line:rgba(28,27,26,0.1); --white:#FFFFFF;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+    display:flex;
+  }
+  h1,.display{ font-family:'Fraunces',serif; font-weight:600; letter-spacing:-0.01em; }
+
+  /* Left brand panel */
+  .brand-panel{
+    flex:1;
+    background:var(--ink);
+    color:var(--bg);
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding:48px;
+    position:relative;
+    overflow:hidden;
+    min-width:0;
+  }
+  .brand-panel::before{
+    content:'';
+    position:absolute;
+    width:500px;height:500px;
+    border-radius:50%;
+    background:radial-gradient(circle,rgba(255,107,74,0.35),transparent 70%);
+    top:-120px; right:-160px;
+  }
+  .brand-logo{ display:flex; align-items:center; gap:10px; z-index:1; }
+  .logo-mark{
+    width:34px;height:34px;border-radius:10px;
+    background:linear-gradient(135deg,var(--coral),#FFB199);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .logo-mark svg{ width:18px;height:18px; }
+  .logo-text{ font-family:'Fraunces',serif; font-weight:600; font-size:20px; }
+
+  .brand-quote{ z-index:1; max-width:420px; }
+  .brand-quote h1{ font-size:36px; line-height:1.25; margin-bottom:16px; }
+  .brand-quote p{ color:#B8B5C4; font-size:14.5px; line-height:1.6; }
+
+  .brand-stats{ display:flex; gap:28px; z-index:1; }
+  .brand-stat .num{ font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700; color:var(--coral); }
+  .brand-stat .label{ font-size:12px; color:#8C899A; margin-top:2px; }
+
+  /* Right form panel */
+  .form-panel{
+    width:460px;
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:40px;
+  }
+  .form-card{ width:100%; max-width:340px; }
+
+  .tabs{
+    display:flex;
+    background:#F0ECE1;
+    border-radius:999px;
+    padding:4px;
+    margin-bottom:32px;
+  }
+  .tab{
+    flex:1; text-align:center; padding:9px 0; border-radius:999px;
+    font-size:13.5px; font-weight:600; color:var(--ink-soft);
+    cursor:pointer; transition:all 0.15s ease;
+  }
+  .tab.active{ background:var(--ink); color:var(--bg); }
+
+  .form-card h2{ font-family:'Fraunces',serif; font-size:26px; font-weight:600; margin-bottom:6px; }
+  .form-card .sub{ font-size:13.5px; color:var(--ink-soft); margin-bottom:26px; }
+
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:12.5px; font-weight:600; margin-bottom:6px; color:var(--ink-soft); }
+  .field input{
+    width:100%; padding:11px 14px; border-radius:12px;
+    border:1.5px solid var(--line); font-family:'Inter',sans-serif; font-size:14px;
+    background:var(--white); outline:none; transition:border-color 0.15s ease;
+  }
+  .field input:focus{ border-color:var(--coral); }
+
+  .forgot{ text-align:right; font-size:12.5px; color:var(--ink-faint); margin-top:-8px; margin-bottom:20px; cursor:pointer; }
+  .forgot:hover{ color:var(--coral-dark); }
+
+  .btn-primary{
+    width:100%; padding:13px; border-radius:12px; border:none;
+    background:var(--coral); color:white; font-family:'Inter',sans-serif;
+    font-size:14.5px; font-weight:700; cursor:pointer; transition:background 0.15s ease;
+    box-shadow:0 6px 16px rgba(255,107,74,0.28);
+  }
+  .btn-primary:hover{ background:var(--coral-dark); }
+
+  .divider{ display:flex; align-items:center; gap:12px; margin:22px 0; color:var(--ink-faint); font-size:12.5px; }
+  .divider::before, .divider::after{ content:''; flex:1; height:1px; background:var(--line); }
+
+  .btn-google{
+    width:100%; padding:11px; border-radius:12px; border:1.5px solid var(--line);
+    background:var(--white); display:flex; align-items:center; justify-content:center; gap:10px;
+    font-size:13.5px; font-weight:600; cursor:pointer; color:var(--ink);
+  }
+  .btn-google:hover{ border-color:var(--ink-faint); }
+
+  .switch-line{ text-align:center; font-size:13px; color:var(--ink-soft); margin-top:24px; }
+  .switch-line span{ color:var(--coral-dark); font-weight:600; cursor:pointer; }
+
+  .view{ display:none; }
+  .view.active{ display:block; }
+
+  @media (max-width:900px){ .brand-panel{ display:none; } .form-panel{ width:100%; } }
+</style>
+</head>
+<body>
+
+<div class="brand-panel">
+  <div class="brand-logo">
+    <div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg></div>
+    <span class="logo-text">Momentum</span>
+  </div>
+
+  <div class="brand-quote">
+    <h1>Small actions,<br>repeated daily,<br>build unstoppable momentum.</h1>
+    <p>Track habits, manage tasks, and watch your consistency compound — one day, one streak, one level at a time.</p>
+  </div>
+
+  <div class="brand-stats">
+    <div class="brand-stat"><div class="num">12K+</div><div class="label">habits tracked</div></div>
+    <div class="brand-stat"><div class="num">98%</div><div class="label">stay consistent</div></div>
+    <div class="brand-stat"><div class="num">4.9★</div><div class="label">user rating</div></div>
+  </div>
+</div>
+
+<div class="form-panel">
+  <div class="form-card">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('login')">Log In</div>
+      <div class="tab" onclick="switchTab('signup')">Sign Up</div>
+    </div>
+
+    <div id="login" class="view active">
+      <h2>Welcome back</h2>
+      <p class="sub">Log in to keep your streaks alive.</p>
+      <div class="field"><label>Email</label><input type="email" placeholder="you@example.com"></div>
+      <div class="field"><label>Password</label><input type="password" placeholder="••••••••"></div>
+      <div class="forgot">Forgot password?</div>
+      <button class="btn-primary" onclick="window.location.href='app.html'">Log In</button>
+      <div class="divider">or</div>
+      <button class="btn-google">
+        <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.25 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0012 23z"/><path fill="#FBBC05" d="M5.84 14.09A6.6 6.6 0 015.5 12c0-.73.13-1.43.34-2.09V7.07H2.18A11 11 0 001 12c0 1.77.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1a11 11 0 00-9.82 6.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/></svg>
+        Continue with Google
+      </button>
+      <div class="switch-line">New here? <span onclick="switchTab('signup')">Sign up</span></div>
+    </div>
+
+    <div id="signup" class="view">
+      <h2>Create your account</h2>
+      <p class="sub">Start building momentum today.</p>
+      <div class="field"><label>Name</label><input type="text" placeholder="Deodatta"></div>
+      <div class="field"><label>Email</label><input type="email" placeholder="you@example.com"></div>
+      <div class="field"><label>Password</label><input type="password" placeholder="••••••••"></div>
+      <div class="field"><label>Confirm Password</label><input type="password" placeholder="••••••••"></div>
+      <button class="btn-primary" style="margin-top:6px;" onclick="window.location.href='app.html'">Sign Up</button>
+      <div class="divider">or</div>
+      <button class="btn-google">
+        <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.25 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0012 23z"/><path fill="#FBBC05" d="M5.84 14.09A6.6 6.6 0 015.5 12c0-.73.13-1.43.34-2.09V7.07H2.18A11 11 0 001 12c0 1.77.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1a11 11 0 00-9.82 6.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/></svg>
+        Continue with Google
+      </button>
+      <div class="switch-line">Already have an account? <span onclick="switchTab('login')">Log in</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function switchTab(name){
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById(name).classList.add('active');
+    document.querySelectorAll('.tab')[name==='login'?0:1].classList.add('active');
+  }
+</script>
+
+</body>
+</html>
