@@ -380,9 +380,9 @@
     align-items:center;
     margin-bottom:16px;
   }
-  .mini-cal-days{ display:flex; gap:6px; }
+  .mini-cal-days{ display:flex; gap:6px; width:100%; }
   .mini-cal-day{
-    width:34px;
+    flex:1;
     text-align:center;
     padding:8px 0 6px;
     border-radius:12px;
@@ -396,9 +396,22 @@
   .timeline-item{
     display:flex;
     gap:12px;
+    align-items:flex-start;
     padding:11px 0;
   }
   .timeline-item + .timeline-item{ border-top:1px solid var(--line); }
+  .timeline-check{
+    width:19px;height:19px;border-radius:6px;
+    border:2px solid var(--line);
+    flex-shrink:0;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    margin-top:2px;
+    transition:all 0.15s ease;
+  }
+  .timeline-check.done{ background:var(--coral); border-color:var(--coral); }
+  .timeline-check svg{ width:11px;height:11px;color:white; }
+  .timeline-item.done .timeline-content h4{ text-decoration:line-through; color:var(--ink-faint); }
   .timeline-time{ font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--ink-faint); width:52px; flex-shrink:0; padding-top:2px; }
   .timeline-dot-wrap{ display:flex; flex-direction:column; align-items:center; flex-shrink:0; }
   .timeline-dot{ width:9px;height:9px;border-radius:50%; margin-top:5px; }
@@ -486,12 +499,36 @@
   .year-heatmap .sq.lvl1{ background:#FFD9CC; }
   .year-heatmap .sq.lvl2{ background:#FFB199; }
   .year-heatmap .sq.lvl3{ background:var(--coral); }
-  .line-chart{ width:100%; height:150px; }
-  .habit-breakdown-row{ display:flex; align-items:center; gap:10px; padding:9px 0; font-size:13px; }
-  .habit-breakdown-row + .habit-breakdown-row{ border-top:1px solid var(--line); }
+  .line-chart{ width:100%; height:170px; overflow:visible; }
+  .chart-wrap{ padding-top:10px; }
+  .chart-axis-label{ font-family:'JetBrains Mono',monospace; font-size:9px; fill:var(--ink-faint); }
+  .chart-x-labels text{ font-family:'JetBrains Mono',monospace; font-size:9px; fill:var(--ink-faint); text-anchor:middle; }
+  .chart-points circle{ fill:var(--coral); stroke:var(--white); stroke-width:1.5; }
+  .chart-val{ font-family:'JetBrains Mono',monospace; font-size:9px; fill:var(--ink-soft); text-anchor:middle; font-weight:600; }
+
+  .range-toggle{ display:flex; background:#F0ECE1; border-radius:999px; padding:3px; gap:2px; }
+  .range-opt{ padding:5px 14px; border-radius:999px; font-size:12px; font-weight:600; color:var(--ink-soft); cursor:pointer; }
+  .range-opt.active{ background:var(--ink); color:var(--bg); }
+
+  .month-heatmap{ display:grid; grid-template-columns:repeat(7,1fr); gap:5px; }
+  .month-heatmap .mh-label{ text-align:center; font-size:10.5px; color:var(--ink-faint); font-weight:600; padding-bottom:4px; }
+  .month-heatmap .sq{ aspect-ratio:1; border-radius:6px; background:var(--line); display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--ink-faint); font-family:'JetBrains Mono',monospace; }
+  .month-heatmap .sq.lvl1{ background:#FFD9CC; color:var(--ink); }
+  .month-heatmap .sq.lvl2{ background:#FFB199; color:white; }
+  .month-heatmap .sq.lvl3{ background:var(--coral); color:white; }
+  .month-heatmap .sq.empty{ background:transparent; }
+
+  .breakdown-card{ padding:14px 0; }
+  .breakdown-card + .breakdown-card{ border-top:1px solid var(--line); }
+  .breakdown-card-top{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .breakdown-card-icon{ width:30px;height:30px;border-radius:9px; display:flex;align-items:center;justify-content:center; font-size:14px; flex-shrink:0; }
+  .breakdown-card-name{ font-size:13.5px; font-weight:600; flex:1; }
+  .breakdown-card-streak{ font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--coral-dark); font-weight:700; display:flex; align-items:center; gap:3px; }
+  .breakdown-card-streak svg{ width:11px;height:11px; }
   .breakdown-bar-track{ flex:1; height:6px; border-radius:4px; background:var(--line); overflow:hidden; }
   .breakdown-bar-fill{ height:100%; border-radius:4px; background:var(--coral); }
-  .breakdown-pct{ font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink-soft); width:36px; text-align:right; }
+  .breakdown-card-bottom{ display:flex; align-items:center; gap:10px; }
+  .breakdown-pct{ font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink-soft); width:70px; text-align:right; }
 
   /* Rewards */
   .level-hero{
@@ -783,17 +820,23 @@
           <div class="mini-cal-day today">W<span class="num">7</span></div>
           <div class="mini-cal-day">T<span class="num">8</span></div>
           <div class="mini-cal-day">F<span class="num">9</span></div>
+          <div class="mini-cal-day">S<span class="num">10</span></div>
+          <div class="mini-cal-day">S<span class="num">11</span></div>
         </div>
       </div>
 
-      <div class="timeline-item">
+      <div class="timeline-item done">
+        <div class="timeline-check done" onclick="toggleTimelineItem(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
         <div class="timeline-time">6:30 AM</div>
         <div class="timeline-content">
           <h4>Morning Run</h4>
-          <p>Habit · completed</p>
+          <p>Habit</p>
         </div>
       </div>
       <div class="timeline-item">
+        <div class="timeline-check" onclick="toggleTimelineItem(this)"></div>
         <div class="timeline-time">2:00 PM</div>
         <div class="timeline-content">
           <h4>Submit assignment</h4>
@@ -801,10 +844,11 @@
         </div>
       </div>
       <div class="timeline-item">
+        <div class="timeline-check" onclick="toggleTimelineItem(this)"></div>
         <div class="timeline-time">9:00 PM</div>
         <div class="timeline-content">
           <h4>Read 20 Pages</h4>
-          <p>Habit · pending</p>
+          <p>Habit</p>
         </div>
       </div>
 
@@ -869,25 +913,59 @@
     </div>
 
     <div class="panel" style="margin-bottom:18px;">
-      <div class="panel-head"><h3>Yearly Consistency</h3><span class="see-all">2026</span></div>
+      <div class="panel-head">
+        <h3>Consistency</h3>
+        <div class="range-toggle">
+          <span class="range-opt active" onclick="setHeatmapRange('year', this)">Year</span>
+          <span class="range-opt" onclick="setHeatmapRange('month', this)">Month</span>
+        </div>
+      </div>
       <div id="yearHeatmap" class="year-heatmap"></div>
+      <div id="monthHeatmap" class="month-heatmap" style="display:none;"></div>
     </div>
 
     <div class="lower">
       <div class="panel">
         <div class="panel-head"><h3>Completion Rate</h3><span class="see-all">Last 8 weeks</span></div>
-        <svg viewBox="0 0 400 140" class="line-chart">
-          <polyline fill="none" stroke="var(--coral)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
-            points="0,90 50,70 100,80 150,50 200,60 250,30 300,40 350,15 400,25"/>
-          <polyline fill="url(#lineFill)" stroke="none" points="0,90 50,70 100,80 150,50 200,60 250,30 300,40 350,15 400,25 400,140 0,140"/>
-          <defs><linearGradient id="lineFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="var(--coral)" stop-opacity="0.18"/>
-            <stop offset="100%" stop-color="var(--coral)" stop-opacity="0"/>
-          </linearGradient></defs>
-        </svg>
+        <div class="chart-wrap">
+          <svg viewBox="0 0 420 170" class="line-chart">
+            <line x1="34" y1="10" x2="34" y2="130" stroke="var(--line)" stroke-width="1"/>
+            <line x1="34" y1="10" x2="410" y2="10" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 4"/>
+            <line x1="34" y1="70" x2="410" y2="70" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 4"/>
+            <line x1="34" y1="130" x2="410" y2="130" stroke="var(--line)" stroke-width="1"/>
+            <text x="26" y="14" class="chart-axis-label" text-anchor="end">100%</text>
+            <text x="26" y="74" class="chart-axis-label" text-anchor="end">50%</text>
+            <text x="26" y="134" class="chart-axis-label" text-anchor="end">0%</text>
+
+            <polyline fill="url(#lineFill)" stroke="none"
+              points="52,68 100,86 148,74 196,38 244,50 292,14 340,26 388,4 388,130 52,130"/>
+            <polyline fill="none" stroke="var(--coral)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+              points="52,68 100,86 148,74 196,38 244,50 292,14 340,26 388,4"/>
+            <defs><linearGradient id="lineFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="var(--coral)" stop-opacity="0.2"/>
+              <stop offset="100%" stop-color="var(--coral)" stop-opacity="0"/>
+            </linearGradient></defs>
+
+            <g class="chart-points">
+              <circle cx="52" cy="68" r="3.5"/><text x="52" y="58" class="chart-val">52%</text>
+              <circle cx="100" cy="86" r="3.5"/><text x="100" y="100" class="chart-val">37%</text>
+              <circle cx="148" cy="74" r="3.5"/><text x="148" y="64" class="chart-val">47%</text>
+              <circle cx="196" cy="38" r="3.5"/><text x="196" y="28" class="chart-val">77%</text>
+              <circle cx="244" cy="50" r="3.5"/><text x="244" y="64" class="chart-val">67%</text>
+              <circle cx="292" cy="14" r="3.5"/><text x="292" y="4"  class="chart-val" style="fill:var(--coral-dark);font-weight:700;">97%</text>
+              <circle cx="340" cy="26" r="3.5"/><text x="340" y="16" class="chart-val">87%</text>
+              <circle cx="388" cy="4"  r="3.5"/><text x="388" y="-6" class="chart-val">100%</text>
+            </g>
+
+            <g class="chart-x-labels">
+              <text x="52" y="148">W1</text><text x="100" y="148">W2</text><text x="148" y="148">W3</text><text x="196" y="148">W4</text>
+              <text x="244" y="148">W5</text><text x="292" y="148">W6</text><text x="340" y="148">W7</text><text x="388" y="148">W8</text>
+            </g>
+          </svg>
+        </div>
       </div>
       <div class="panel">
-        <div class="panel-head"><h3>Per-Habit Breakdown</h3></div>
+        <div class="panel-head"><h3>Per-Habit Breakdown</h3><span class="see-all">Last 14 days</span></div>
         <div id="habitBreakdown"></div>
       </div>
     </div>
@@ -1117,6 +1195,13 @@
   }
 
   /* ---------- ANALYTICS ---------- */
+  function setHeatmapRange(range, el){
+    document.querySelectorAll('.range-opt').forEach(o=>o.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('yearHeatmap').style.display = range==='year' ? 'grid' : 'none';
+    document.getElementById('monthHeatmap').style.display = range==='month' ? 'grid' : 'none';
+  }
+
   function renderAnalytics(){
     const hm = document.getElementById('yearHeatmap');
     let cells = '';
@@ -1127,15 +1212,36 @@
     }
     hm.innerHTML = cells;
 
+    const mh = document.getElementById('monthHeatmap');
+    const dayLabels = ['S','M','T','W','T','F','S'];
+    let monthCells = dayLabels.map(d=>`<div class="mh-label">${d}</div>`).join('');
+    const firstDayOffset = 3; // July 2026 starts on a Wednesday
+    const daysInMonth = 31;
+    for(let i=0;i<firstDayOffset;i++) monthCells += `<div class="sq empty"></div>`;
+    for(let d=1; d<=daysInMonth; d++){
+      const r = Math.random();
+      const lvl = d>7 ? '' : (r>0.55 ? 'lvl3' : r>0.3 ? 'lvl2' : 'lvl1'); // future days blank
+      monthCells += `<div class="sq ${lvl}">${d}</div>`;
+    }
+    mh.innerHTML = monthCells;
+
     const bd = document.getElementById('habitBreakdown');
     bd.innerHTML = habits.map(h=>{
-      const pct = Math.round((h.history.filter(v=>v).length / h.history.length) * 100);
-      return `<div class="habit-breakdown-row">
-        <span>${h.icon}</span>
-        <div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:${pct}%"></div></div>
-        <span class="breakdown-pct">${pct}%</span>
+      const done = h.history.filter(v=>v).length;
+      const total = h.history.length;
+      const pct = Math.round((done/total)*100);
+      return `<div class="breakdown-card">
+        <div class="breakdown-card-top">
+          <div class="breakdown-card-icon" style="background:${h.color}">${h.icon}</div>
+          <div class="breakdown-card-name">${h.name}</div>
+          <div class="breakdown-card-streak"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>${h.streak}</div>
+        </div>
+        <div class="breakdown-card-bottom">
+          <div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:${pct}%"></div></div>
+          <span class="breakdown-pct">${done}/${total} days</span>
+        </div>
       </div>`;
-    }).join('');
+    }).join('') || '<p class="empty-note">Add a habit to see its breakdown here.</p>';
   }
 
   /* ---------- REWARDS ---------- */
@@ -1169,6 +1275,16 @@
         : '';
     });
   });
+
+  function toggleTimelineItem(el){
+    const item = el.closest('.timeline-item');
+    const nowDone = !el.classList.contains('done');
+    el.classList.toggle('done', nowDone);
+    item.classList.toggle('done', nowDone);
+    el.innerHTML = nowDone
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>'
+      : '';
+  }
 
   /* init */
   renderHabits(); renderTodos();
