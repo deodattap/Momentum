@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Momentum — Habits</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="habits">
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg>
+    </div>
+    <span class="logo-text">Momentum</span>
+  </div>
+
+  <div class="nav-section-label">General</div>
+  <a class="nav-item" data-view="dashboard" onclick="showView('dashboard')">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg></span>
+    Dashboard
+  </a>
+  <a class="nav-item" data-view="habits" onclick="showView('habits')">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg></span>
+    Habits
+  </a>
+  <a class="nav-item" data-view="todos" onclick="showView('todos')">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></span>
+    Todos
+  </a>
+  <a class="nav-item" data-view="notes" onclick="showView('notes')">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg></span>
+    Notes
+  </a>
+  <a class="nav-item" data-view="analytics" onclick="showView('analytics')">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-6 4 3 5-8"/></svg></span>
+    Analytics
+  </a>
+  <a class="nav-item" data-view="rewards" onclick="showView('rewards')">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="5"/><path d="M4 22l2-6h12l2 6"/></svg></span>
+    Rewards
+  </a>
+
+  <div class="nav-section-label">Tools</div>
+  <a class="nav-item" data-view="settings" onclick="showView('settings')">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.16.31.26.65.3 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>
+    Settings
+  </a>
+
+  <div class="sidebar-spacer"></div>
+
+  <div class="sidebar-footer">
+    <div class="avatar" id="sidebarAvatar">D</div>
+    <div class="sidebar-footer-text">
+      <div class="sidebar-footer-name" id="sidebarName">Deodatta</div>
+      <div class="sidebar-footer-sub" onclick="window.location.href='login.html'">Log out</div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+<div id="view-habits" class="view">
+    <div class="view-header">
+      <div>
+        <h1>Habits</h1>
+        <p class="view-sub">Everything you're building, one day at a time.</p>
+      </div>
+      <button class="btn-add" onclick="openModal('habitModal')">+ New Habit</button>
+    </div>
+
+    <div id="habitsGrid" class="habits-grid"></div>
+  </div>
+</main>
+<div id="habitModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-head"><h3>New Habit</h3><span class="modal-close" onclick="closeModal('habitModal')">&times;</span></div>
+    <div class="field"><label>Habit Name</label><input id="h_name" type="text" placeholder="e.g. Morning Run"></div>
+    <div class="field"><label>Description</label><input id="h_desc" type="text" placeholder="Why this habit matters"></div>
+    <div class="field-row">
+      <div class="field"><label>Icon</label>
+        <div class="icon-picker" id="h_iconPicker">
+          <span class="icon-opt selected">🏃</span><span class="icon-opt">💧</span><span class="icon-opt">📖</span>
+          <span class="icon-opt">🧘</span><span class="icon-opt">💪</span><span class="icon-opt">🎨</span>
+        </div>
+      </div>
+      <div class="field"><label>Color</label>
+        <div class="icon-picker" id="h_colorPicker">
+          <span class="color-opt selected" style="background:#F6E29B" data-c="#FFF1CE"></span>
+          <span class="color-opt" style="background:#F5C6CE" data-c="#FFE0E6"></span>
+          <span class="color-opt" style="background:#BFD9B4" data-c="#E3F0DD"></span>
+          <span class="color-opt" style="background:#C7C0EE" data-c="#EFE7FF"></span>
+        </div>
+      </div>
+    </div>
+    <div class="field"><label>Frequency</label>
+      <select id="h_freq"><option>Daily</option><option>Weekdays</option><option>3x / week</option><option>Weekly</option></select>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Start Date</label><input id="h_start" type="date"></div>
+      <div class="field"><label>Reminder</label><input id="h_time" type="time"></div>
+    </div>
+    <button class="btn-primary" onclick="addHabit()">Save Habit</button>
+  </div>
+</div>
+
+<div id="todoModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-head"><h3>New Todo</h3><span class="modal-close" onclick="closeModal('todoModal')">&times;</span></div>
+    <div class="field"><label>Task Name</label><input id="t_name" type="text" placeholder="e.g. Submit assignment"></div>
+    <div class="field-row">
+      <div class="field"><label>Due Date</label><input id="t_date" type="date"></div>
+      <div class="field"><label>Due Time</label><input id="t_time" type="time"></div>
+    </div>
+    <div class="field"><label>Priority</label>
+      <div class="priority-picker" id="t_priority">
+        <span class="priority-opt low">Low</span><span class="priority-opt med selected">Medium</span><span class="priority-opt high">High</span>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="addTodo()">Save Todo</button>
+  </div>
+</div>
+<script src="js/app.js"></script>
+</body>
+</html>

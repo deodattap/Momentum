@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Momentum — Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="notes">
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg>
+    </div>
+    <span class="logo-text">Momentum</span>
+  </div>
+
+  <div class="nav-section-label">General</div>
+  <a class="nav-item" data-view="dashboard" onclick="showView('dashboard')">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg></span>
+    Dashboard
+  </a>
+  <a class="nav-item" data-view="habits" onclick="showView('habits')">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg></span>
+    Habits
+  </a>
+  <a class="nav-item" data-view="todos" onclick="showView('todos')">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></span>
+    Todos
+  </a>
+  <a class="nav-item" data-view="notes" onclick="showView('notes')">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg></span>
+    Notes
+  </a>
+  <a class="nav-item" data-view="analytics" onclick="showView('analytics')">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-6 4 3 5-8"/></svg></span>
+    Analytics
+  </a>
+  <a class="nav-item" data-view="rewards" onclick="showView('rewards')">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="5"/><path d="M4 22l2-6h12l2 6"/></svg></span>
+    Rewards
+  </a>
+
+  <div class="nav-section-label">Tools</div>
+  <a class="nav-item" data-view="settings" onclick="showView('settings')">
+    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.16.31.26.65.3 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>
+    Settings
+  </a>
+
+  <div class="sidebar-spacer"></div>
+
+  <div class="sidebar-footer">
+    <div class="avatar" id="sidebarAvatar">D</div>
+    <div class="sidebar-footer-text">
+      <div class="sidebar-footer-name" id="sidebarName">Deodatta</div>
+      <div class="sidebar-footer-sub" onclick="window.location.href='login.html'">Log out</div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+<div id="view-notes" class="view">
+    <div class="notes-layout">
+
+      <div class="notes-list-panel">
+        <div class="notes-list-head">
+          <h3>Notes</h3>
+          <button class="btn-add-sm" onclick="newNote()">+ New</button>
+        </div>
+        <div id="notesList" class="notes-list"></div>
+      </div>
+
+      <div class="notes-editor-panel">
+        <div class="notes-toolbar">
+          <input id="noteTitleInput" class="note-title-input" type="text" placeholder="Untitled note" oninput="onTitleInput()">
+
+          <div class="toolbar-row">
+            <select class="tb-select" onchange="execCmd('fontName', this.value)" title="Font">
+              <option value="Inter">Inter</option>
+              <option value="Fraunces">Fraunces</option>
+              <option value="JetBrains Mono">Mono</option>
+              <option value="Georgia">Georgia</option>
+              <option value="Arial">Arial</option>
+              <option value="'Times New Roman'">Times New Roman</option>
+              <option value="'Courier New'">Courier New</option>
+              <option value="Verdana">Verdana</option>
+              <option value="'Trebuchet MS'">Trebuchet MS</option>
+            </select>
+            <select class="tb-select tb-select-sm" onchange="execCmd('fontSize', this.value)" title="Size">
+              <option value="2">Small</option>
+              <option value="3" selected>Normal</option>
+              <option value="5">Large</option>
+              <option value="7">Huge</option>
+            </select>
+
+            <span class="tb-divider"></span>
+
+            <button class="tb-btn" onclick="execCmd('bold')" title="Bold"><b>B</b></button>
+            <button class="tb-btn" onclick="execCmd('italic')" title="Italic"><i>I</i></button>
+            <button class="tb-btn" onclick="execCmd('underline')" title="Underline"><u>U</u></button>
+
+            <span class="tb-divider"></span>
+
+            <label class="tb-color-btn" title="Text color">
+              A<input type="color" value="#1C1B1A" onchange="execCmd('foreColor', this.value)">
+            </label>
+            <label class="tb-color-btn tb-highlight-btn" title="Highlight">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+              <input type="color" value="#FFF3A0" onchange="execCmd('hiliteColor', this.value)">
+            </label>
+
+            <span class="tb-divider"></span>
+
+            <button class="tb-btn" onclick="execCmd('justifyLeft')" title="Align left"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg></button>
+            <button class="tb-btn" onclick="execCmd('justifyCenter')" title="Align center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg></button>
+            <button class="tb-btn" onclick="execCmd('insertUnorderedList')" title="Bullet list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="4" cy="6" r="1.4" fill="currentColor"/><circle cx="4" cy="12" r="1.4" fill="currentColor"/><circle cx="4" cy="18" r="1.4" fill="currentColor"/><line x1="9" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="9" y1="18" x2="21" y2="18"/></svg></button>
+            <button class="tb-btn" onclick="execCmd('insertOrderedList')" title="Numbered list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="9" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="9" y1="18" x2="21" y2="18"/><text x="1" y="8" font-size="7" fill="currentColor" stroke="none">1</text><text x="1" y="14" font-size="7" fill="currentColor" stroke="none">2</text><text x="1" y="20" font-size="7" fill="currentColor" stroke="none">3</text></svg></button>
+            <button class="tb-btn" onclick="execCmd('removeFormat')" title="Clear formatting">Tx</button>
+
+            <span class="tb-spacer"></span>
+
+            <button class="btn-outline tb-action" onclick="downloadNote()">⬇ Download</button>
+            <button class="btn-outline tb-action" onclick="printNote()">🖨 Print / PDF</button>
+            <button class="btn-add tb-action" onclick="shareNote()">Share</button>
+          </div>
+        </div>
+
+        <div class="notebook-wrap" id="notebookWrap">
+          <div class="note-page" id="notePage">
+            <div class="note-spiral" id="noteSpiral"></div>
+            <div class="note-margin-line"></div>
+            <div id="noteContent" class="note-content" contenteditable="true" oninput="onContentInput()"></div>
+          </div>
+        </div>
+        <div class="note-meta" id="noteMeta">Last edited just now</div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<script src="js/app.js"></script>
+</body>
+</html>
