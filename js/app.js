@@ -1,5 +1,4 @@
-
-  /* ---------- SHARED DATE UTILITIES ---------- */
+/* ---------- SHARED DATE UTILITIES ---------- */
   const TODAY = new Date(2026,6,8); // July 8, 2026 — single source of truth for "today"
   function dateKey(d){ return d.toISOString().slice(0,10); }
   function shortLabel(d){ return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
@@ -470,28 +469,57 @@
   }
 
   /* ---------- REWARDS ---------- */
-  const badges = [
-    {name:'7-Day Streak', unlocked:true, bg:'#FFE9DC', anim:'icon-flicker',
-      svg:'<path d="M24 4c4 6 10 12 10 20a10 10 0 01-20 0c0-3 1-5.5 2.5-8 .8 2 2.5 4 4.5 4 2 0 2.8-1.8 1.8-3.5C20.5 13 19 9.5 24 4z" fill="#FF9142"/><path d="M24 16c2.5 4 5 7 5 11a5 5 0 01-10 0c0-1.5.5-2.8 1.2-4 .5 1.2 1.5 2.2 2.3 2.2 1 0 1.3-1 .8-2C22 20.5 21 18 24 16z" fill="#FFD23F"/>'},
+  /* ---------- BADGE CHAINS (tiered, always extend to a next target) ---------- */
+  const badgeChains = [
+    {
+      key:'streak', label:'Streak', icon:'flame', bgBase:'#FFE9DC', anim:'icon-flicker',
+      baseTiers:[7,15,30,60,100], step:50,
+      unit:'day streak',
+      labelFor: (n) => `${n}-Day Streak`,
+      currentValue: () => habits.length ? Math.max(...habits.map(h=>h.streak)) : 0,
+      svg:'<path d="M24 4c4 6 10 12 10 20a10 10 0 01-20 0c0-3 1-5.5 2.5-8 .8 2 2.5 4 4.5 4 2 0 2.8-1.8 1.8-3.5C20.5 13 19 9.5 24 4z" fill="#FF9142"/><path d="M24 16c2.5 4 5 7 5 11a5 5 0 01-10 0c0-1.5.5-2.8 1.2-4 .5 1.2 1.5 2.2 2.3 2.2 1 0 1.3-1 .8-2C22 20.5 21 18 24 16z" fill="#FFD23F"/>'
+    },
+    {
+      key:'todos', label:'Todo', icon:'check', bgBase:'#E1F3EC', anim:'',
+      baseTiers:[10,25,50,100], step:50,
+      unit:'todos done',
+      labelFor: (n) => `${n} Todos Done`,
+      currentValue: () => todos.filter(t=>t.done).length,
+      svg:'<path d="M18 4l6 14-6 3-4-13z" fill="#3FC1B0"/><path d="M30 4l-6 14 6 3 4-13z" fill="#FF6B6B"/><circle cx="24" cy="30" r="10" fill="#FFC93C" stroke="#E0A400" stroke-width="2"/><path d="M24 24l1.8 3.7 4 .6-3 2.9.7 4-3.5-1.9-3.5 1.9.7-4-3-2.9 4-.6z" fill="#FFF3D0"/>'
+    },
+    {
+      key:'checkins', label:'Check-in', icon:'trophy', bgBase:'#E7F1FC', anim:'icon-bob',
+      baseTiers:[25,75,150,300], step:250,
+      unit:'total check-ins',
+      labelFor: (n) => `${n} Check-ins`,
+      currentValue: () => habits.reduce((sum,h)=>sum + h.history.filter(v=>v).length, 0),
+      svg:'<path d="M12 16h24l6 8-18 16L6 24z" fill="#A6A192"/><path d="M12 16h24l-12 8z" fill="#C9C5B8"/><path d="M6 24h36l-18 16z" fill="#8A8578"/><path d="M12 16l-6 8h12z" fill="#B4AFA0"/><path d="M36 16l6 8h-12z" fill="#B4AFA0"/>'
+    }
+  ];
+
+  const flavorBadges = [
     {name:'Early Bird', unlocked:true, bg:'#FFF3D6', anim:'',
       svg:'<path d="M16 8h16v8a8 8 0 01-16 0V8z" fill="#FFC93C"/><path d="M16 8h16v3H16z" fill="#FFE07D"/><path d="M12 10h4v4a4 4 0 01-4-4z" fill="none" stroke="#E0A400" stroke-width="2"/><path d="M36 10h-4v4a4 4 0 004-4z" fill="none" stroke="#E0A400" stroke-width="2"/><rect x="21" y="24" width="6" height="7" fill="#C97B3D"/><rect x="15" y="31" width="18" height="4" rx="1.5" fill="#A85F2A"/><path d="M9 12c1 3 3 5 5 6l-1-3c-2-.5-3.5-1.8-4-3z" fill="#6FCF6F"/><path d="M39 12c-1 3-3 5-5 6l1-3c2-.5 3.5-1.8 4-3z" fill="#6FCF6F"/>'},
-    {name:'Todo Master', unlocked:true, bg:'#E1F3EC', anim:'',
-      svg:'<path d="M18 4l6 14-6 3-4-13z" fill="#3FC1B0"/><path d="M30 4l-6 14 6 3 4-13z" fill="#FF6B6B"/><circle cx="24" cy="30" r="10" fill="#FFC93C" stroke="#E0A400" stroke-width="2"/><path d="M24 24l1.8 3.7 4 .6-3 2.9.7 4-3.5-1.9-3.5 1.9.7-4-3-2.9 4-.6z" fill="#FFF3D0"/>'},
     {name:'Comeback Kid', unlocked:true, bg:'#FDE7E7', anim:'icon-bob',
       svg:'<circle cx="24" cy="24" r="14" fill="#FF6B6B"/><circle cx="24" cy="24" r="10" fill="#FFF3EC"/><circle cx="24" cy="24" r="6" fill="#FF6B6B"/><circle cx="24" cy="24" r="2.5" fill="#FFC93C"/><path d="M32 12l6-4-1 7-3 1z" fill="#C97B3D"/>'},
     {name:'Perfect Week', unlocked:true, bg:'#EFE9FB', anim:'icon-sway',
-      svg:'<path d="M16 26v14l8-5 8 5V26z" fill="#8E6FCB"/><path d="M24 8l3.5 7 7.5 1-5.5 5.3 1.3 7.7L24 25l-6.8 3.7 1.3-7.7L13 15l7.5-1z" fill="#FFC93C"/>'},
-    {name:'30-Day Streak', unlocked:true, bg:'#E7F1FC', anim:'icon-bob',
-      svg:'<path d="M24 4c5 4 7 10 7 16 0 3-1 6-2 8h-10c-1-2-2-5-2-8 0-6 2-12 7-16z" fill="#F1F3F6"/><circle cx="24" cy="18" r="4" fill="#6EC3FF" stroke="#2D8FD1" stroke-width="1.5"/><path d="M17 22l-5 6 5-1z" fill="#FF6B6B"/><path d="M31 22l5 6-5-1z" fill="#FF6B6B"/><path d="M21 28h6l2 5-5 3-5-3z" fill="#FF9142"/><path d="M23 30h2l1 4-2 2-2-2z" fill="#FFD23F"/>'},
-    {name:'Consistency King', unlocked:false, bg:'#EDEAE0', anim:'',
-      svg:'<path d="M10 20l4 12h20l4-12-8 5-6-9-6 9z" fill="#8A8578"/><circle cx="10" cy="20" r="2.5" fill="#8A8578"/><circle cx="24" cy="13" r="2.5" fill="#8A8578"/><circle cx="38" cy="20" r="2.5" fill="#8A8578"/><rect x="12" y="32" width="24" height="5" rx="1.5" fill="#A6A192"/>'},
-    {name:'100 Habits Done', unlocked:false, bg:'#EDEAE0', anim:'',
-      svg:'<rect x="10" y="20" width="28" height="18" rx="2" fill="#A6A192"/><rect x="10" y="20" width="28" height="6" fill="#8A8578"/><rect x="21" y="14" width="6" height="24" fill="#8A8578"/><path d="M24 14c-3-6-11-4-8 2 2 3 8 2 8-2z" fill="#8A8578"/><path d="M24 14c3-6 11-4 8 2-2 3-8 2-8-2z" fill="#8A8578"/>'},
-    {name:'Century Club — 100 Days', unlocked:false, bg:'#EDEAE0', anim:'',
-      svg:'<path d="M24 10L4 18l20 8 20-8z" fill="#8A8578"/><rect x="14" y="24" width="20" height="8" fill="#A6A192"/><path d="M42 18v9c0 1-1 2-2 2s-2-1-2-2v-9z" fill="#8A8578"/><circle cx="40" cy="30" r="2" fill="#A6A192"/>'},
-    {name:'Unstoppable — 60-Day Streak', unlocked:false, bg:'#EDEAE0', anim:'',
-      svg:'<path d="M12 16h24l6 8-18 16L6 24z" fill="#A6A192"/><path d="M12 16h24l-12 8z" fill="#C9C5B8"/><path d="M6 24h36l-18 16z" fill="#8A8578"/><path d="M12 16l-6 8h12z" fill="#B4AFA0"/><path d="M36 16l6 8h-12z" fill="#B4AFA0"/>'}
+      svg:'<path d="M16 26v14l8-5 8 5V26z" fill="#8E6FCB"/><path d="M24 8l3.5 7 7.5 1-5.5 5.3 1.3 7.7L24 25l-6.8 3.7 1.3-7.7L13 15l7.5-1z" fill="#FFC93C"/>'}
   ];
+
+  // extends a chain's tier list until the last one exceeds the current value —
+  // this is what makes progression infinite: there's always one more target ahead
+  function getChainProgress(chain){
+    const value = chain.currentValue();
+    let tiers = [...chain.baseTiers];
+    while(tiers[tiers.length-1] <= value){
+      tiers.push(tiers[tiers.length-1] + chain.step);
+    }
+    const achieved = tiers.slice(0, -1);
+    const nextTarget = tiers[tiers.length-1];
+    const prevTarget = achieved.length ? achieved[achieved.length-1] : 0;
+    return { value, achieved, nextTarget, prevTarget };
+  }
+
   const rankTitles = [
     {min:0, title:'Newcomer', icon:'🌱'},
     {min:2, title:'Spark', icon:'✨'},
@@ -505,20 +533,82 @@
   function renderRewards(){
     const grid = document.getElementById('badgeGrid');
     if(!grid) return;
-    grid.innerHTML = badges.map(b=>`
+
+    let cards = [];
+
+    badgeChains.forEach(chain=>{
+      const { achieved, nextTarget, value, prevTarget } = getChainProgress(chain);
+      const remaining = nextTarget - value;
+      const span = nextTarget - prevTarget;
+      const progressPct = Math.max(4, Math.round(((value-prevTarget)/span)*100));
+
+      if(achieved.length === 0){
+        // no tier earned yet — show the first tier as the locked target to work toward
+        cards.push({
+          name: chain.labelFor(nextTarget), unlocked:false, bg:'#EDEAE0', anim:'', svg:chain.svg,
+          progressLabel:`${value}/${nextTarget} · ${remaining} to go`, progressPct
+        });
+      } else {
+        // show ONLY the current (highest earned) tier — this badge replaces itself as you level up,
+        // with a caption showing progress toward the next tier so it's clear more is coming
+        const currentTier = achieved[achieved.length-1];
+        cards.push({
+          name: chain.labelFor(currentTier), unlocked:true, bg:chain.bgBase, anim:chain.anim, svg:chain.svg,
+          progressLabel:`Next: ${chain.labelFor(nextTarget)} · ${remaining} to go`, progressPct, showNextCaption:true
+        });
+      }
+    });
+
+    flavorBadges.forEach(b=>cards.push(b));
+
+    grid.innerHTML = cards.map(b=>`
       <div class="badge-item ${b.unlocked?'':'locked'}" onclick="onBadgeClick(this, ${b.unlocked})">
         <div class="badge-circle ${b.unlocked?'glow':'locked'}" style="background:${b.bg};">
           <svg class="${b.unlocked?b.anim:''}" viewBox="0 0 48 48">${b.svg}</svg>
         </div>
         <div class="badge-name ${b.unlocked?'':'locked-label'}">${b.name}</div>
+        ${b.progressLabel ? `
+          <div class="badge-progress-track"><div class="badge-progress-fill" style="width:${b.progressPct}%"></div></div>
+          <div class="badge-progress-label">${b.progressLabel}</div>
+        ` : ''}
       </div>
     `).join('');
 
     const level = currentLevel();
     let rank = rankTitles[0];
     rankTitles.forEach(r => { if(level >= r.min) rank = r; });
-    document.getElementById('rankTitle').textContent = rank.title;
-    document.getElementById('rankIcon').textContent = rank.icon;
+    const rankTitleEl = document.getElementById('rankTitle');
+    const rankIconEl = document.getElementById('rankIcon');
+    if(rankTitleEl) rankTitleEl.textContent = rank.title;
+    if(rankIconEl) rankIconEl.textContent = rank.icon;
+
+    renderNextMilestone();
+  }
+
+  function renderNextMilestone(){
+    const wrap = document.getElementById('nextMilestoneBody');
+    if(!wrap) return;
+    // find whichever chain is CLOSEST to its next tier — that's the most motivating one to surface
+    let best = null;
+    badgeChains.forEach(chain=>{
+      const { value, nextTarget, prevTarget } = getChainProgress(chain);
+      const remaining = nextTarget - value;
+      if(!best || remaining < best.remaining){
+        best = { chain, value, nextTarget, prevTarget, remaining };
+      }
+    });
+    if(!best) return;
+    const span = best.nextTarget - best.prevTarget;
+    const pct = Math.max(4, Math.round(((best.value-best.prevTarget)/span)*100));
+    const label = best.chain.labelFor(best.nextTarget);
+    wrap.innerHTML = `
+      <div class="milestone-icon">🏆</div>
+      <div style="flex:1;">
+        <div class="milestone-title">${label}</div>
+        <div class="milestone-bar"><div class="milestone-fill" style="width:${pct}%;"></div></div>
+        <div class="milestone-sub">${best.value} / ${best.nextTarget} · ${best.remaining} to go</div>
+      </div>
+    `;
   }
 
   function onBadgeClick(el, unlocked){
