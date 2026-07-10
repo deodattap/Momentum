@@ -458,8 +458,7 @@
     cursor:pointer;
   }
 
-  .view{ display:none; }
-  .view.active{ display:block; }
+  .view{ display:block; }
 
   .view-header{
     display:flex; justify-content:space-between; align-items:flex-end;
