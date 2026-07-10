@@ -1,5 +1,4 @@
-
-  :root{
+:root{
     --bg:#FAF7F0;
     --ink:#1C1B1A;
     --ink-soft:#6B6862;
@@ -624,7 +623,7 @@
     position:relative; overflow:hidden;
   }
   .badge-item:hover .badge-circle{ transform:translateY(-3px) scale(1.04); }
-  .badge-circle svg{ width:46px; height:46px; position:relative; z-index:2; }
+  .badge-circle svg{ width:60px; height:60px; position:relative; z-index:2; }
   .badge-circle.locked{ background:#EDEAE0 !important; filter:none; }
   .badge-circle.locked svg{ opacity:0.4; filter:grayscale(0.6); }
 
