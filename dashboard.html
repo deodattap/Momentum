@@ -66,8 +66,8 @@
 
   <div class="greeting-row">
     <div class="greeting">
-      <h1>Good morning, Deodatta</h1>
-      <p id="greetingSub">You've got <span class="accent">3 habits</span> and <span class="accent">2 tasks</span> today. Your longest streak is 12 days — let's keep it moving.</p>
+      <h1 id="greetingH1">Good morning, Deodatta</h1>
+      <p id="greetingSub">You've got <span class="accent">0 habits</span> and <span class="accent">0 tasks</span> today.</p>
     </div>
     <div class="quote-chip" id="quoteChip"><span id="quoteText">Motion, once started, is far easier to continue than to begin again.</span></div>
     <div class="live-clock">
@@ -88,17 +88,9 @@
         Today's Habits
       </div>
       <div>
-        <div class="card-big-number">2<span style="font-size:20px;opacity:0.6;">/3</span></div>
+        <div class="card-big-number"><span id="habitsTodayDone">0</span><span style="font-size:20px;opacity:0.6;">/<span id="habitsTodayTotal">0</span></span></div>
         <div class="card-sub">completed today</div>
-        <div class="mini-bars">
-          <div class="bar filled" style="height:70%"></div>
-          <div class="bar filled" style="height:100%"></div>
-          <div class="bar filled" style="height:40%"></div>
-          <div class="bar" style="height:85%"></div>
-          <div class="bar filled" style="height:55%"></div>
-          <div class="bar filled" style="height:95%"></div>
-          <div class="bar" style="height:30%"></div>
-        </div>
+        <div class="mini-bars" id="miniBars"></div>
       </div>
     </div>
 
@@ -108,8 +100,8 @@
         Current Streak
       </div>
       <div>
-        <div class="card-big-number">12<span style="font-size:16px;opacity:0.7;"> days</span></div>
-        <div class="card-sub">longest: 21 days</div>
+        <div class="card-big-number"><span id="currentStreakNum">0</span><span style="font-size:16px;opacity:0.7;"> days</span></div>
+        <div class="card-sub">longest: <span id="longestStreakNum">0</span> days</div>
         <div class="trail-wrap">
           <svg class="trail-svg" viewBox="0 0 220 44" preserveAspectRatio="none">
             <path class="trail-path" d="M4 36 C 40 36, 50 10, 90 22 S 150 8, 216 6"/>
@@ -127,11 +119,11 @@
       <div class="ring-wrap">
         <svg class="ring-svg" viewBox="0 0 64 64">
           <circle class="ring-bg" cx="32" cy="32" r="26"/>
-          <circle class="ring-fg" cx="32" cy="32" r="26" stroke-dasharray="163.4" stroke-dashoffset="52"/>
-          <text x="32" y="37" class="ring-label" style="fill:var(--sage-ink)">Lv 4</text>
+          <circle class="ring-fg" id="xpRingFg" cx="32" cy="32" r="26" stroke-dasharray="163.4" stroke-dashoffset="163.4"/>
+          <text x="32" y="37" class="ring-label" id="levelLabel" style="fill:var(--sage-ink)">Lv 1</text>
         </svg>
         <div>
-          <div class="card-big-number" style="font-size:24px;">320<span style="font-size:13px;opacity:0.7;">/500</span></div>
+          <div class="card-big-number" style="font-size:24px;"><span id="xpCurrent">0</span><span style="font-size:13px;opacity:0.7;">/<span id="xpNext">500</span></span></div>
           <div class="card-sub">XP to next level</div>
         </div>
       </div>
@@ -145,10 +137,10 @@
       <div class="donut-wrap">
         <svg class="donut-svg" viewBox="0 0 64 64">
           <circle class="donut-bg" cx="32" cy="32" r="26"/>
-          <circle class="donut-fg" cx="32" cy="32" r="26" stroke-dasharray="163.4" stroke-dashoffset="98"/>
+          <circle class="donut-fg" id="todoRingFg" cx="32" cy="32" r="26" stroke-dasharray="163.4" stroke-dashoffset="163.4"/>
         </svg>
         <div>
-          <div class="card-big-number" style="font-size:24px;">1<span style="font-size:13px;opacity:0.7;">/2</span></div>
+          <div class="card-big-number" style="font-size:24px;"><span id="todosTodayDone">0</span><span style="font-size:13px;opacity:0.7;">/<span id="todosTodayTotal">0</span></span></div>
           <div class="card-sub">tasks completed</div>
         </div>
       </div>
@@ -170,19 +162,11 @@
     <div class="panel">
       <div class="panel-head">
         <h3>Today's Todos</h3>
-        <span class="see-all">July</span>
+        <span class="see-all" id="dashMonthLabel">—</span>
       </div>
 
       <div class="mini-cal">
-        <div class="mini-cal-days">
-          <div class="mini-cal-day">M<span class="num">5</span></div>
-          <div class="mini-cal-day">T<span class="num">6</span></div>
-          <div class="mini-cal-day today">W<span class="num">7</span></div>
-          <div class="mini-cal-day">T<span class="num">8</span></div>
-          <div class="mini-cal-day">F<span class="num">9</span></div>
-          <div class="mini-cal-day">S<span class="num">10</span></div>
-          <div class="mini-cal-day">S<span class="num">11</span></div>
-        </div>
+        <div class="mini-cal-days" id="dashWeekStrip"></div>
       </div>
 
       <div id="dashTodos"></div>

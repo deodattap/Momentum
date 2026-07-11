@@ -1,6 +1,13 @@
-/* ---------- SHARED DATE UTILITIES ---------- */
-  const TODAY = new Date(2026,6,8); // July 8, 2026 — single source of truth for "today"
-  function dateKey(d){ return d.toISOString().slice(0,10); }
+
+  /* ---------- SHARED DATE UTILITIES ---------- */
+  // TODAY is the real current date (midnight, local time) — recomputed on every page load,
+  // and the app watches for the date changing while a tab is left open (see bottom of file).
+  function makeToday(){ const d = new Date(); d.setHours(0,0,0,0); return d; }
+  const TODAY = makeToday();
+  function dateKey(d){
+    const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
   function shortLabel(d){ return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
   const TODAY_KEY = dateKey(TODAY);
   function loadState(key, fallback){
@@ -13,20 +20,45 @@
     try{ localStorage.setItem('momentum_'+key, JSON.stringify(value)); }catch(e){}
   }
 
+  /* ---------- STATE ----------
+     New users start completely blank — no seeded habits, todos, or fake streaks.
+     Habit history is a date-keyed map: { "2026-07-08": true, ... } rather than a
+     fixed-length array, so streaks are computed from real calendar dates and never
+     run out or desync, no matter how long the app has been in use. */
+  let habits = loadState('habits', []);
+  let todos = loadState('todos', []);
+  let nextHabitId = loadState('nextHabitId', 1);
+  let nextTodoId = loadState('nextTodoId', 1);
 
-  /* ---------- STATE ---------- */
-  let habits = loadState('habits', [
-    {id:1, name:'Morning Run', desc:'Start the day with movement', icon:'🏃', color:'#FFF1CE', freq:'Daily', streak:12, history:[1,1,1,0,1,1,1,1,0,1,1,1,1,1]},
-    {id:2, name:'Drink 2L Water', desc:'Stay hydrated all day', icon:'💧', color:'#E4F0FF', freq:'Daily', streak:9, history:[1,1,0,1,1,1,0,1,1,1,1,1,0,1]},
-    {id:3, name:'Read 20 Pages', desc:'Grow the mind daily', icon:'📖', color:'#EFE7FF', freq:'Daily', streak:5, history:[0,1,1,1,0,1,1,0,1,1,1,1,1,0]}
-  ]);
-  let todos = loadState('todos', [
-    {id:1, name:'Submit assignment', date:'2026-07-08', time:'14:00', priority:'high', done:false},
-    {id:2, name:'Team standup notes', date:'2026-07-08', time:'10:00', priority:'med', done:true},
-    {id:3, name:'Review portfolio site', date:'2026-07-10', time:'', priority:'low', done:false}
-  ]);
-  let nextHabitId = loadState('nextHabitId', 4);
-  let nextTodoId = loadState('nextTodoId', 4);
+  /* ---------- STREAK ENGINE ---------- */
+  // Current streak = consecutive days ending yesterday, +1 if today is already done.
+  // Today not being done yet never breaks a streak — it just hasn't extended it yet.
+  function calcCurrentStreak(habit){
+    let count = 0;
+    let d = new Date(TODAY);
+    if(habit.history[dateKey(d)]){ count++; }
+    d.setDate(d.getDate()-1);
+    while(habit.history[dateKey(d)]){
+      count++;
+      d.setDate(d.getDate()-1);
+    }
+    return count;
+  }
+  // Longest streak ever, scanning the full history regardless of whether it's still active.
+  function calcLongestStreak(habit){
+    const doneDates = Object.keys(habit.history).filter(k=>habit.history[k]).sort();
+    if(!doneDates.length) return 0;
+    let longest = 1, run = 1;
+    for(let i=1;i<doneDates.length;i++){
+      const prev = new Date(doneDates[i-1]+'T00:00:00');
+      const cur = new Date(doneDates[i]+'T00:00:00');
+      const diffDays = Math.round((cur-prev)/86400000);
+      run = (diffDays===1) ? run+1 : 1;
+      longest = Math.max(longest, run);
+    }
+    return longest;
+  }
+  function totalCheckIns(habit){ return Object.values(habit.history).filter(Boolean).length; }
 
   /* ---------- VIEW SWITCHING ---------- */
   function showView(name){
@@ -41,7 +73,17 @@
   }
 
   /* ---------- MODALS ---------- */
-  function openModal(id){ document.getElementById(id).classList.add('active'); }
+  function openModal(id){
+    document.getElementById(id).classList.add('active');
+    if(id==='habitModal'){
+      const startInput = document.getElementById('h_start');
+      if(startInput && !startInput.value) startInput.value = TODAY_KEY;
+    }
+    if(id==='todoModal'){
+      const dateInput = document.getElementById('t_date');
+      if(dateInput && !dateInput.value) dateInput.value = TODAY_KEY;
+    }
+  }
   function closeModal(id){ document.getElementById(id).classList.remove('active'); }
   document.querySelectorAll('.modal-overlay').forEach(ov=>{
     ov.addEventListener('click', e=>{ if(e.target===ov) ov.classList.remove('active'); });
@@ -73,7 +115,8 @@
     const color = document.querySelector('#h_colorPicker .selected').dataset.c;
     const freq = document.getElementById('h_freq').value;
     const desc = document.getElementById('h_desc').value.trim();
-    habits.push({id:nextHabitId++, name, desc, icon, color, freq, streak:0, history:[0,0,0,0,0,0,0,0,0,0,0,0,0,0]});
+    const startDate = document.getElementById('h_start').value || TODAY_KEY;
+    habits.push({id:nextHabitId++, name, desc, icon, color, freq, startDate, history:{}});
     saveState('habits', habits); saveState('nextHabitId', nextHabitId);
     closeModal('habitModal');
     document.getElementById('h_name').value=''; document.getElementById('h_desc').value='';
@@ -83,9 +126,8 @@
   function deleteHabit(id){ habits = habits.filter(h=>h.id!==id); saveState('habits', habits); renderHabits(); renderDashboard(); }
   function toggleHabitToday(id){
     const h = habits.find(h=>h.id===id);
-    const last = h.history[h.history.length-1];
-    h.history[h.history.length-1] = last ? 0 : 1;
-    h.streak = last ? Math.max(0,h.streak-1) : h.streak+1;
+    h.history[TODAY_KEY] = !h.history[TODAY_KEY];
+    if(!h.history[TODAY_KEY]) delete h.history[TODAY_KEY];
     saveState('habits', habits);
     renderHabits();
     renderDashboard();
@@ -93,9 +135,20 @@
   function renderHabits(){
     const grid = document.getElementById('habitsGrid');
     if(!grid) return;
+    const WINDOW = 14;
     grid.innerHTML = habits.map(h=>{
-      const oldest = new Date(TODAY); oldest.setDate(oldest.getDate() - (h.history.length-1));
+      const oldest = new Date(TODAY); oldest.setDate(oldest.getDate() - (WINDOW-1));
       const rangeLabel = `${shortLabel(oldest)} – ${shortLabel(TODAY)}`;
+      const streak = calcCurrentStreak(h);
+      const doneToday = !!h.history[TODAY_KEY];
+      let cells = '';
+      for(let i=WINDOW-1; i>=0; i--){
+        const d = new Date(TODAY); d.setDate(d.getDate()-i);
+        const key = dateKey(d);
+        const before = key < h.startDate; // no data before the habit was created
+        const v = !!h.history[key];
+        cells += `<div class="sq ${v?'done':''}" title="${shortLabel(d)}${before?' · not tracked yet':v?' · done':' · missed'}" style="${before?'opacity:0.35':''}">${d.getDate()}</div>`;
+      }
       return `
       <div class="habit-card">
         <div class="habit-card-top">
@@ -107,21 +160,16 @@
           <span class="habit-card-del" onclick="deleteHabit(${h.id})">&times;</span>
         </div>
         <div class="heatmap-range">${rangeLabel}</div>
-        <div class="heatmap-strip">
-          ${h.history.map((v,i)=>{
-            const d = new Date(TODAY); d.setDate(d.getDate() - (h.history.length-1-i));
-            return `<div class="sq ${v?'done':''}" title="${shortLabel(d)}${v?' · done':' · missed'}">${d.getDate()}</div>`;
-          }).join('')}
-        </div>
+        <div class="heatmap-strip">${cells}</div>
         <div class="habit-card-bottom">
-          <span class="streak-chip"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>${h.streak}</span>
-          <div class="habit-check ${h.history[h.history.length-1]?'done':''}" onclick="toggleHabitToday(${h.id})">
-            ${h.history[h.history.length-1] ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>' : ''}
+          <span class="streak-chip"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>${streak}</span>
+          <div class="habit-check ${doneToday?'done':''}" onclick="toggleHabitToday(${h.id})">
+            ${doneToday ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>' : ''}
           </div>
         </div>
       </div>
     `;
-    }).join('') || '<p class="empty-note">No habits yet — add your first one.</p>';
+    }).join('') || '<p class="empty-note">No habits yet — tap "+ New Habit" to add your first one.</p>';
   }
 
   /* ---------- TODOS ---------- */
@@ -181,11 +229,32 @@
   }
 
   /* ---------- ANALYTICS ---------- */
-  function hashStr(s){ let h=0; for(let i=0;i<s.length;i++){ h = (h*31 + s.charCodeAt(i))|0; } return Math.abs(h); }
-  function seededRandom(seed){ const x = Math.sin(seed)*10000; return x - Math.floor(x); }
+  function populateMonthSelector(){
+    const sel = document.getElementById('analyticsMonth');
+    if(!sel || sel.options.length) return; // already populated
+    const MONTHS_BACK = 6;
+    let html = '';
+    for(let m=0; m<MONTHS_BACK; m++){
+      const d = new Date(TODAY.getFullYear(), TODAY.getMonth()-m, 1);
+      const val = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      const label = d.toLocaleDateString('en-US',{month:'long', year:'numeric'});
+      html += `<option value="${val}">${label}</option>`;
+    }
+    sel.innerHTML = html;
+  }
+
+  // fraction of habits completed on a given real date (0 if no habits existed that day)
+  function dayCompletionFraction(dateStr){
+    if(!habits.length) return 0;
+    const eligible = habits.filter(h=>h.startDate <= dateStr);
+    if(!eligible.length) return 0;
+    const done = eligible.filter(h=>h.history[dateStr]).length;
+    return done / eligible.length;
+  }
 
   function renderGithubHeatmap(){
     const container = document.getElementById('yearHeatmap');
+    if(!container) return;
     const monthsToShow = 6;
     let html = '';
     for(let m=monthsToShow-1; m>=0; m--){
@@ -200,8 +269,8 @@
         const isFuture = cellDate > TODAY;
         let lvl = 'future';
         if(!isFuture){
-          const r = seededRandom(hashStr(`${year}-${month}-${day}`));
-          lvl = r>0.7?'lvl3':r>0.45?'lvl2':r>0.25?'lvl1':'';
+          const frac = dayCompletionFraction(dateKey(cellDate));
+          lvl = frac===0 ? '' : frac<0.4 ? 'lvl1' : frac<0.8 ? 'lvl2' : 'lvl3';
         }
         daySquares += `<div class="gh-sq ${lvl}${isCurrentMonth && day===TODAY.getDate() ? ' current-month':''}" title="${shortLabel(cellDate)}"></div>`;
       }
@@ -212,19 +281,21 @@
 
   function renderAnalytics(){
     if(!document.getElementById('yearHeatmap')) return;
+    populateMonthSelector();
     const monthSel = document.getElementById('analyticsMonth');
-    const monthVal = monthSel ? monthSel.value : '2026-07';
-    const seed = hashStr(monthVal);
-    const monthLabel = monthSel ? monthSel.options[monthSel.selectedIndex].text : 'July 2026';
+    const monthVal = monthSel.value || monthSel.options[0].value;
+    const monthLabel = monthSel.options[monthSel.selectedIndex] ? monthSel.options[monthSel.selectedIndex].text : '';
+    const [selYear, selMonthNum] = monthVal.split('-').map(Number);
+    const selMonth = selMonthNum - 1; // JS months are 0-indexed
 
     renderGithubHeatmap();
 
-    /* Stat row — seeded per month so it's consistent but varies by selection */
+    /* Stat row — real numbers */
     const stats = document.getElementById('analyticsStats');
-    const curStreak = Math.round(4 + seededRandom(seed+1)*18);
-    const longStreak = curStreak + Math.round(seededRandom(seed+2)*10);
-    const habitsDone = Math.round(60 + seededRandom(seed+3)*120);
-    const todoPct = Math.round(50 + seededRandom(seed+4)*45);
+    const curStreak = habits.length ? Math.max(...habits.map(h=>calcCurrentStreak(h))) : 0;
+    const longStreak = habits.length ? Math.max(...habits.map(h=>calcLongestStreak(h))) : 0;
+    const habitsDone = habits.reduce((sum,h)=>sum+totalCheckIns(h), 0);
+    const todoPct = todos.length ? Math.round((todos.filter(t=>t.done).length/todos.length)*100) : 0;
     stats.innerHTML = `
       <div class="stat-card"><div class="stat-num">${curStreak}</div><div class="stat-label">Current Streak</div></div>
       <div class="stat-card"><div class="stat-num">${longStreak}</div><div class="stat-label">Longest Streak</div></div>
@@ -232,9 +303,22 @@
       <div class="stat-card"><div class="stat-num">${todoPct}%</div><div class="stat-label">Todo Completion</div></div>
     `;
 
-    /* Completion chart — Week 1-4 of selected month */
+    /* Completion chart — real Week 1-4 of the SELECTED month */
     document.getElementById('completionRangeLabel').textContent = monthLabel + ' · Week 1–4';
-    const weekPcts = [1,2,3,4].map(w => Math.round(30 + seededRandom(seed+w*7)*65));
+    const daysInSelMonth = new Date(selYear, selMonth+1, 0).getDate();
+    const weekPcts = [0,1,2,3].map(w=>{
+      const startDay = w*7+1;
+      const endDay = Math.min(startDay+6, daysInSelMonth);
+      if(startDay > daysInSelMonth) return 0;
+      let total=0, count=0;
+      for(let day=startDay; day<=endDay; day++){
+        const d = new Date(selYear, selMonth, day);
+        if(d > TODAY) break; // don't count future days
+        total += dayCompletionFraction(dateKey(d));
+        count++;
+      }
+      return count ? Math.round((total/count)*100) : 0;
+    });
     const xs = [70, 175, 280, 385];
     const yFor = pct => 130 - (pct/100)*120;
     const pts = xs.map((x,i)=>`${x},${yFor(weekPcts[i]).toFixed(1)}`).join(' ');
@@ -264,14 +348,22 @@
 
     const bd = document.getElementById('habitBreakdown');
     bd.innerHTML = habits.map(h=>{
-      const done = h.history.filter(v=>v).length;
-      const total = h.history.length;
-      const pct = Math.round((done/total)*100);
+      const WINDOW = 14;
+      let done = 0, total = 0;
+      for(let i=0;i<WINDOW;i++){
+        const d = new Date(TODAY); d.setDate(d.getDate()-i);
+        const key = dateKey(d);
+        if(key < h.startDate) continue;
+        total++;
+        if(h.history[key]) done++;
+      }
+      const pct = total ? Math.round((done/total)*100) : 0;
+      const streak = calcCurrentStreak(h);
       return `<div class="breakdown-card">
         <div class="breakdown-card-top">
           <div class="breakdown-card-icon" style="background:${h.color}">${h.icon}</div>
           <div class="breakdown-card-name">${h.name}</div>
-          <div class="breakdown-card-streak"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>${h.streak}</div>
+          <div class="breakdown-card-streak"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>${streak}</div>
         </div>
         <div class="breakdown-card-bottom">
           <div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:${pct}%"></div></div>
@@ -476,7 +568,7 @@
       baseTiers:[7,15,30,60,100], step:50,
       unit:'day streak',
       labelFor: (n) => `${n}-Day Streak`,
-      currentValue: () => habits.length ? Math.max(...habits.map(h=>h.streak)) : 0,
+      currentValue: () => habits.length ? Math.max(...habits.map(h=>calcCurrentStreak(h))) : 0,
       svg:'<path d="M24 4c4 6 10 12 10 20a10 10 0 01-20 0c0-3 1-5.5 2.5-8 .8 2 2.5 4 4.5 4 2 0 2.8-1.8 1.8-3.5C20.5 13 19 9.5 24 4z" fill="#FF9142"/><path d="M24 16c2.5 4 5 7 5 11a5 5 0 01-10 0c0-1.5.5-2.8 1.2-4 .5 1.2 1.5 2.2 2.3 2.2 1 0 1.3-1 .8-2C22 20.5 21 18 24 16z" fill="#FFD23F"/>'
     },
     {
@@ -492,19 +584,23 @@
       baseTiers:[25,75,150,300], step:250,
       unit:'total check-ins',
       labelFor: (n) => `${n} Check-ins`,
-      currentValue: () => habits.reduce((sum,h)=>sum + h.history.filter(v=>v).length, 0),
+      currentValue: () => habits.reduce((sum,h)=>sum + totalCheckIns(h), 0),
       svg:'<path d="M12 16h24l6 8-18 16L6 24z" fill="#A6A192"/><path d="M12 16h24l-12 8z" fill="#C9C5B8"/><path d="M6 24h36l-18 16z" fill="#8A8578"/><path d="M12 16l-6 8h12z" fill="#B4AFA0"/><path d="M36 16l6 8h-12z" fill="#B4AFA0"/>'
     }
   ];
 
   const flavorBadges = [
-    {name:'Early Bird', unlocked:true, bg:'#FFF3D6', anim:'',
+    {name:'First Step', bg:'#FFF3D6', anim:'',
+      isUnlocked: () => habits.some(h=>totalCheckIns(h) >= 1),
       svg:'<path d="M16 8h16v8a8 8 0 01-16 0V8z" fill="#FFC93C"/><path d="M16 8h16v3H16z" fill="#FFE07D"/><path d="M12 10h4v4a4 4 0 01-4-4z" fill="none" stroke="#E0A400" stroke-width="2"/><path d="M36 10h-4v4a4 4 0 004-4z" fill="none" stroke="#E0A400" stroke-width="2"/><rect x="21" y="24" width="6" height="7" fill="#C97B3D"/><rect x="15" y="31" width="18" height="4" rx="1.5" fill="#A85F2A"/><path d="M9 12c1 3 3 5 5 6l-1-3c-2-.5-3.5-1.8-4-3z" fill="#6FCF6F"/><path d="M39 12c-1 3-3 5-5 6l1-3c2-.5 3.5-1.8 4-3z" fill="#6FCF6F"/>'},
-    {name:'Comeback Kid', unlocked:true, bg:'#FDE7E7', anim:'icon-bob',
+    {name:'Comeback Kid', bg:'#FDE7E7', anim:'icon-bob',
+      isUnlocked: () => habits.some(h=>calcCurrentStreak(h) > 0 && totalCheckIns(h) > calcCurrentStreak(h)),
       svg:'<circle cx="24" cy="24" r="14" fill="#FF6B6B"/><circle cx="24" cy="24" r="10" fill="#FFF3EC"/><circle cx="24" cy="24" r="6" fill="#FF6B6B"/><circle cx="24" cy="24" r="2.5" fill="#FFC93C"/><path d="M32 12l6-4-1 7-3 1z" fill="#C97B3D"/>'},
-    {name:'Perfect Week', unlocked:true, bg:'#EFE9FB', anim:'icon-sway',
+    {name:'Perfect Day', bg:'#EFE9FB', anim:'icon-sway',
+      isUnlocked: () => habits.length > 0 && habits.every(h=>h.history[TODAY_KEY]),
       svg:'<path d="M16 26v14l8-5 8 5V26z" fill="#8E6FCB"/><path d="M24 8l3.5 7 7.5 1-5.5 5.3 1.3 7.7L24 25l-6.8 3.7 1.3-7.7L13 15l7.5-1z" fill="#FFC93C"/>'}
   ];
+
 
   // extends a chain's tier list until the last one exceeds the current value —
   // this is what makes progression infinite: there's always one more target ahead
@@ -528,7 +624,7 @@
     {min:10, title:'Unstoppable', icon:'🔥'},
     {min:15, title:'Legend', icon:'👑'}
   ];
-  function currentLevel(){ return 4; } // mirrors the XP card on the dashboard
+  function currentLevel(){ return levelFromXP(calcTotalXP()).level; }
 
   function renderRewards(){
     const grid = document.getElementById('badgeGrid');
@@ -559,7 +655,7 @@
       }
     });
 
-    flavorBadges.forEach(b=>cards.push(b));
+    flavorBadges.forEach(b=>cards.push({...b, unlocked:b.isUnlocked(), bg:b.isUnlocked()?b.bg:'#EDEAE0'}));
 
     grid.innerHTML = cards.map(b=>`
       <div class="badge-item ${b.unlocked?'':'locked'}" onclick="onBadgeClick(this, ${b.unlocked})">
@@ -574,13 +670,22 @@
       </div>
     `).join('');
 
-    const level = currentLevel();
+    const totalXP = calcTotalXP();
+    const { level, xpIntoLevel, xpForNext } = levelFromXP(totalXP);
     let rank = rankTitles[0];
     rankTitles.forEach(r => { if(level >= r.min) rank = r; });
     const rankTitleEl = document.getElementById('rankTitle');
     const rankIconEl = document.getElementById('rankIcon');
     if(rankTitleEl) rankTitleEl.textContent = rank.title;
     if(rankIconEl) rankIconEl.textContent = rank.icon;
+
+    setText('levelHeroNum', 'Level ' + level);
+    setText('levelHeroSub', `${xpIntoLevel} / ${xpForNext} XP · ${xpForNext-xpIntoLevel} XP to level ${level+1}`);
+    const levelRing = document.getElementById('levelRingFg');
+    if(levelRing){
+      const pct = xpIntoLevel / xpForNext;
+      levelRing.setAttribute('stroke-dashoffset', (377 * (1-pct)).toFixed(1));
+    }
 
     renderNextMilestone();
   }
@@ -634,11 +739,33 @@
   }
 
   /* ---------- DASHBOARD (real data, single source of truth) ---------- */
+  /* ---------- XP / LEVEL ENGINE ----------
+     XP is earned from real actions: +10 per habit check-in, +5 per completed todo.
+     Level = one tier per 500 XP. This feeds the Dashboard XP card, the Rewards
+     level ring, and the rank title — all computed live, nothing hardcoded. */
+  function calcTotalXP(){
+    let xp = 0;
+    habits.forEach(h => xp += totalCheckIns(h) * 10);
+    xp += todos.filter(t=>t.done).length * 5;
+    return xp;
+  }
+  function levelFromXP(xp){
+    const level = Math.floor(xp/500) + 1;
+    const xpIntoLevel = xp % 500;
+    return { level, xpIntoLevel, xpForNext:500 };
+  }
+
+  function weekdayLetter(d){ return ['S','M','T','W','T','F','S'][d.getDay()]; }
+
   function renderDashboard(){
+    const totalXP = calcTotalXP();
+    const { level, xpIntoLevel, xpForNext } = levelFromXP(totalXP);
+
     const dh = document.getElementById('dashHabits');
     if(dh){
       dh.innerHTML = habits.map(h=>{
-        const doneToday = h.history[h.history.length-1];
+        const doneToday = !!h.history[TODAY_KEY];
+        const streak = calcCurrentStreak(h);
         return `<div class="habit-row">
           <div class="habit-check ${doneToday?'done':''}" onclick="toggleHabitToday(${h.id})">
             ${doneToday ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>' : ''}
@@ -648,9 +775,9 @@
             <div class="habit-name">${h.name}</div>
             <div class="habit-freq">${h.freq}</div>
           </div>
-          <div class="streak-chip"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>${h.streak}</div>
+          <div class="streak-chip"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>${streak}</div>
         </div>`;
-      }).join('') || '<p class="empty-note">No habits yet — add your first one.</p>';
+      }).join('') || '<p class="empty-note">No habits yet — head to the Habits tab to add your first one.</p>';
     }
 
     const dt = document.getElementById('dashTodos');
@@ -659,13 +786,89 @@
       dt.innerHTML = todayTodos.map(todoRow).join('') || '<p class="empty-note">Nothing due today. Enjoy it.</p>';
     }
 
+    // week strip (Mon–Sun containing today), built from the real calendar
+    const weekStripEl = document.getElementById('dashWeekStrip');
+    if(weekStripEl){
+      const dow = TODAY.getDay(); // 0=Sun..6=Sat
+      const mondayOffset = dow===0 ? -6 : 1-dow;
+      const monday = new Date(TODAY); monday.setDate(monday.getDate()+mondayOffset);
+      let html = '';
+      for(let i=0;i<7;i++){
+        const d = new Date(monday); d.setDate(d.getDate()+i);
+        const isToday = dateKey(d)===TODAY_KEY;
+        html += `<div class="mini-cal-day ${isToday?'today':''}">${weekdayLetter(d)}<span class="num">${d.getDate()}</span></div>`;
+      }
+      weekStripEl.innerHTML = html;
+    }
+    const monthLabelEl = document.getElementById('dashMonthLabel');
+    if(monthLabelEl) monthLabelEl.textContent = TODAY.toLocaleDateString('en-US',{month:'long'});
+
+    // greeting — time of day + real counts
+    const hour = new Date().getHours();
+    const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    const h1 = document.getElementById('greetingH1');
+    if(h1) h1.textContent = `${timeGreeting}, ${userProfile.name}`;
+
     const totalHabits = habits.length;
     const todayTasksLeft = todos.filter(t=>t.date===TODAY_KEY && !t.done).length;
-    const longest = habits.length ? Math.max(...habits.map(h=>h.streak)) : 0;
+    const longest = habits.length ? Math.max(...habits.map(h=>calcLongestStreak(h))) : 0;
     const sub = document.getElementById('greetingSub');
     if(sub){
-      sub.innerHTML = `You've got <span class="accent">${totalHabits} habit${totalHabits!==1?'s':''}</span> and <span class="accent">${todayTasksLeft} task${todayTasksLeft!==1?'s':''}</span> today. Your longest streak is ${longest} days — let's keep it moving.`;
+      if(totalHabits===0 && todos.length===0){
+        sub.textContent = "You're all set up — add a habit or a task to get moving.";
+      } else {
+        sub.innerHTML = `You've got <span class="accent">${totalHabits} habit${totalHabits!==1?'s':''}</span> and <span class="accent">${todayTasksLeft} task${todayTasksLeft!==1?'s':''}</span> today.${longest ? ` Your longest streak is ${longest} day${longest!==1?'s':''} — let's keep it moving.` : ''}`;
+      }
     }
+
+    // bento: Today's Habits card
+    const habitsDoneToday = habits.filter(h=>h.history[TODAY_KEY]).length;
+    setText('habitsTodayDone', habitsDoneToday);
+    setText('habitsTodayTotal', totalHabits);
+    const miniBarsEl = document.getElementById('miniBars');
+    if(miniBarsEl){
+      // last 7 real days: what fraction of habits were completed each day
+      let bars = '';
+      for(let i=6;i>=0;i--){
+        const d = new Date(TODAY); d.setDate(d.getDate()-i);
+        const key = dateKey(d);
+        const doneCount = habits.filter(h=>h.history[key]).length;
+        const pct = totalHabits ? Math.round((doneCount/totalHabits)*100) : 0;
+        bars += `<div class="bar ${pct>0?'filled':''}" style="height:${Math.max(pct,6)}%"></div>`;
+      }
+      miniBarsEl.innerHTML = bars;
+    }
+
+    // bento: Current Streak card
+    const currentStreak = habits.length ? Math.max(...habits.map(h=>calcCurrentStreak(h))) : 0;
+    setText('currentStreakNum', currentStreak);
+    setText('longestStreakNum', longest);
+
+    // bento: Level & XP card
+    setText('levelLabel', 'Lv ' + level);
+    setText('xpCurrent', xpIntoLevel);
+    setText('xpNext', xpForNext);
+    const xpRing = document.getElementById('xpRingFg');
+    if(xpRing){
+      const pct = xpIntoLevel / xpForNext;
+      xpRing.setAttribute('stroke-dashoffset', (163.4 * (1-pct)).toFixed(1));
+    }
+
+    // bento: Todos Today card
+    const todayAll = todos.filter(t=>t.date===TODAY_KEY);
+    const todayDone = todayAll.filter(t=>t.done).length;
+    setText('todosTodayDone', todayDone);
+    setText('todosTodayTotal', todayAll.length);
+    const todoRing = document.getElementById('todoRingFg');
+    if(todoRing){
+      const pct = todayAll.length ? todayDone/todayAll.length : 0;
+      todoRing.setAttribute('stroke-dashoffset', (163.4 * (1-pct)).toFixed(1));
+    }
+  }
+
+  function setText(id, val){
+    const el = document.getElementById(id);
+    if(el) el.textContent = val;
   }
 
   /* ---------- MOTIVATIONAL QUOTES ---------- */
@@ -703,6 +906,15 @@
   }
   setInterval(tickClock, 1000);
   tickClock();
+
+  /* ---------- DAILY ROLLOVER WATCHER ----------
+     TODAY is computed once when the script loads. If someone leaves a tab open
+     past midnight, this catches the date change and reloads so every streak,
+     "today" list, and stat recalculates against the new day automatically. */
+  setInterval(()=>{
+    const nowKey = dateKey(new Date());
+    if(nowKey !== TODAY_KEY){ window.location.reload(); }
+  }, 60000);
 
   /* init */
   if(loadState('darkMode', false)){ document.body.classList.add('dark'); }
