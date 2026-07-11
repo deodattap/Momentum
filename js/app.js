@@ -1,5 +1,4 @@
-
-  /* ---------- SHARED DATE UTILITIES ---------- */
+/* ---------- SHARED DATE UTILITIES ---------- */
   // TODAY is the real current date (midnight, local time) — recomputed on every page load,
   // and the app watches for the date changing while a tab is left open (see bottom of file).
   function makeToday(){ const d = new Date(); d.setHours(0,0,0,0); return d; }
@@ -526,17 +525,74 @@
     onContentInput();
   }
 
+  // Builds a fully standalone HTML document that visually matches the in-app
+  // spiral notebook page — same fonts, ruled lines, spiral rings, margin line —
+  // so downloaded/shared notes look identical to how they appear in Momentum.
+  function buildNoteDocument(n){
+    const title = n.title || 'Untitled note';
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>${title} — Momentum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:#F0ECE1;
+    font-family:'Inter',sans-serif;
+    padding:32px;
+    display:flex;
+    justify-content:center;
+  }
+  .note-page{
+    background:#FFFDF8; width:100%; max-width:720px; min-height:900px;
+    border-radius:6px 18px 18px 6px; box-shadow:0 12px 40px rgba(28,27,26,0.14);
+    position:relative; padding:50px 46px 80px 78px;
+  }
+  .note-spiral{
+    position:absolute; left:0; top:0; bottom:0; width:34px;
+    background-color:rgba(28,27,26,0.045);
+    background-image:radial-gradient(circle, #A6A29B 0 5px, transparent 6px);
+    background-size:34px 36px; background-position:0 18px; background-repeat:repeat-y;
+    opacity:0.55;
+  }
+  .note-margin-line{ position:absolute; left:66px; top:0; bottom:0; width:1.5px; background:rgba(255,107,74,0.25); }
+  .note-title{ font-family:'Fraunces',serif; font-weight:600; font-size:24px; color:#1C1B1A; margin-bottom:22px; }
+  .note-content{
+    font-family:'Inter',sans-serif; font-size:15px; line-height:28px; color:#1C1B1A;
+    background-image:repeating-linear-gradient(to bottom, transparent, transparent 27px, rgba(28,27,26,0.08) 28px);
+  }
+  .note-content ul, .note-content ol{ padding-left:24px; }
+  .note-footer{ text-align:center; font-size:11px; color:#A6A29B; margin-top:24px; font-family:'Inter',sans-serif; }
+  @media print{ body{ background:white; padding:0; } .note-page{ box-shadow:none; } }
+</style>
+</head>
+<body>
+  <div class="note-page">
+    <div class="note-spiral"></div>
+    <div class="note-margin-line"></div>
+    <div class="note-title">${title}</div>
+    <div class="note-content">${n.content}</div>
+  </div>
+  <div class="note-footer">Written in Momentum</div>
+</body>
+</html>`;
+  }
+
+  function noteFileName(n, ext){
+    return `${(n.title||'untitled-note').replace(/[^a-z0-9]+/gi,'-').toLowerCase()}.${ext}`;
+  }
+
   function downloadNote(){
     const n = activeNote();
     if(!n) return;
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${n.title||'Untitled note'}</title>
-      <style>body{font-family:Georgia,serif;max-width:700px;margin:40px auto;padding:0 20px;line-height:1.7;color:#1C1B1A;}
-      h1{font-family:Georgia,serif;}</style></head>
-      <body><h1>${n.title||'Untitled note'}</h1>${n.content}</body></html>`;
+    const html = buildNoteDocument(n);
     const blob = new Blob([html], {type:'text/html'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `${(n.title||'untitled-note').replace(/[^a-z0-9]+/gi,'-').toLowerCase()}.html`;
+    a.download = noteFileName(n, 'html');
     a.click();
     URL.revokeObjectURL(a.href);
   }
@@ -548,16 +604,29 @@
   function shareNote(){
     const n = activeNote();
     if(!n) return;
-    const plainText = n.content.replace(/<[^>]*>/g,'\n').replace(/\n{2,}/g,'\n').trim();
-    if(navigator.share){
-      navigator.share({ title:n.title||'Untitled note', text:plainText }).catch(()=>{});
-    } else if(navigator.clipboard){
-      navigator.clipboard.writeText(plainText).then(()=>{
-        alert('Note content copied to clipboard — paste it anywhere to share.');
-      });
-    } else {
-      alert('Sharing isn\'t supported in this browser. Try Download instead.');
+    const html = buildNoteDocument(n);
+    const blob = new Blob([html], {type:'text/html'});
+    const file = new File([blob], noteFileName(n, 'html'), {type:'text/html'});
+
+    // Prefer sharing the actual styled file, so the recipient sees the same
+    // notebook-page look — not just stripped plain text.
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({ files:[file], title:n.title||'Untitled note' }).catch(()=>{});
+      return;
     }
+    if(navigator.share){
+      const plainText = n.content.replace(/<\/(p|div|li)>/gi,'\n').replace(/<br\s*\/?>/gi,'\n').replace(/<[^>]*>/g,'').replace(/\n{2,}/g,'\n').trim();
+      navigator.share({ title:n.title||'Untitled note', text:plainText }).catch(()=>{});
+      return;
+    }
+    if(navigator.clipboard){
+      const plainText = n.content.replace(/<\/(p|div|li)>/gi,'\n').replace(/<br\s*\/?>/gi,'\n').replace(/<[^>]*>/g,'').replace(/\n{2,}/g,'\n').trim();
+      navigator.clipboard.writeText(plainText).then(()=>{
+        alert('Sharing a styled file isn\'t supported here, so the note text was copied to your clipboard instead. Use Download for the full notebook-page version.');
+      });
+      return;
+    }
+    alert('Sharing isn\'t supported in this browser. Try Download instead.');
   }
 
   /* ---------- REWARDS ---------- */
@@ -602,7 +671,7 @@
   ];
 
 
-  // extends a chain's tier list until the last one exceeds the current value —
+  // extends a chain's tier list until one exceeds the current value —
   // this is what makes progression infinite: there's always one more target ahead
   function getChainProgress(chain){
     const value = chain.currentValue();
@@ -610,8 +679,10 @@
     while(tiers[tiers.length-1] <= value){
       tiers.push(tiers[tiers.length-1] + chain.step);
     }
-    const achieved = tiers.slice(0, -1);
-    const nextTarget = tiers[tiers.length-1];
+    // only tiers actually cleared by the real value count as achieved —
+    // e.g. value=0 means achieved=[] even though baseTiers starts at 7
+    const achieved = tiers.filter(t => t <= value);
+    const nextTarget = tiers.find(t => t > value);
     const prevTarget = achieved.length ? achieved[achieved.length-1] : 0;
     return { value, achieved, nextTarget, prevTarget };
   }
@@ -693,27 +764,24 @@
   function renderNextMilestone(){
     const wrap = document.getElementById('nextMilestoneBody');
     if(!wrap) return;
-    // find whichever chain is CLOSEST to its next tier — that's the most motivating one to surface
-    let best = null;
-    badgeChains.forEach(chain=>{
+    const icons = { streak:'🔥', todos:'✅', checkins:'🏆' };
+    const rows = badgeChains.map(chain=>{
       const { value, nextTarget, prevTarget } = getChainProgress(chain);
       const remaining = nextTarget - value;
-      if(!best || remaining < best.remaining){
-        best = { chain, value, nextTarget, prevTarget, remaining };
-      }
+      const span = nextTarget - prevTarget;
+      const pct = Math.max(4, Math.round(((value-prevTarget)/span)*100));
+      const label = chain.labelFor(nextTarget);
+      return `
+      <div class="milestone">
+        <div class="milestone-icon">${icons[chain.key] || '🏆'}</div>
+        <div style="flex:1;">
+          <div class="milestone-title">${label}</div>
+          <div class="milestone-bar"><div class="milestone-fill" style="width:${pct}%;"></div></div>
+          <div class="milestone-sub">${value} / ${nextTarget} · ${remaining} to go</div>
+        </div>
+      </div>`;
     });
-    if(!best) return;
-    const span = best.nextTarget - best.prevTarget;
-    const pct = Math.max(4, Math.round(((best.value-best.prevTarget)/span)*100));
-    const label = best.chain.labelFor(best.nextTarget);
-    wrap.innerHTML = `
-      <div class="milestone-icon">🏆</div>
-      <div style="flex:1;">
-        <div class="milestone-title">${label}</div>
-        <div class="milestone-bar"><div class="milestone-fill" style="width:${pct}%;"></div></div>
-        <div class="milestone-sub">${best.value} / ${best.nextTarget} · ${best.remaining} to go</div>
-      </div>
-    `;
+    wrap.innerHTML = rows.join('');
   }
 
   function onBadgeClick(el, unlocked){

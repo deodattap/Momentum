@@ -1,5 +1,4 @@
-
-  :root{
+:root{
     --bg:#FAF7F0;
     --ink:#1C1B1A;
     --ink-soft:#6B6862;
@@ -673,6 +672,7 @@
     100%{ transform:var(--fly-to) rotate(var(--fly-rot)); opacity:0; }
   }
 
+  .milestone-list{ display:flex; flex-direction:column; gap:18px; }
   .milestone{ display:flex; gap:16px; align-items:center; }
   .milestone-icon{ width:48px;height:48px;border-radius:14px; background:var(--yellow); display:flex;align-items:center;justify-content:center; font-size:22px; flex-shrink:0; }
   .milestone-title{ font-size:14px; font-weight:600; margin-bottom:8px; }
