@@ -1,3 +1,11 @@
+/* ---------- AUTH GUARD & PER-USER STORAGE ----------
+   Every app page (everything except login.html) requires an active session.
+   Signed-out visitors are bounced back to the login screen. Once signed in,
+   all state below is namespaced under this user's id (momentum_u<id>_<key>)
+   so two different accounts in the same browser never see each other's data. */
+  if(window.MomentumAuth) MomentumAuth.requireAuth();
+  const CURRENT_USER = window.MomentumAuth ? MomentumAuth.currentUser() : null;
+
 /* ---------- SHARED DATE UTILITIES ---------- */
   // TODAY is the real current date (midnight, local time) — recomputed on every page load,
   // and the app watches for the date changing while a tab is left open (see bottom of file).
@@ -9,14 +17,19 @@
   }
   function shortLabel(d){ return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
   const TODAY_KEY = dateKey(TODAY);
+  function scopedKey(key){
+    // Falls back to the old shared key only if somehow no user is logged in,
+    // so the app never throws — requireAuth() above should already have redirected.
+    return CURRENT_USER ? `momentum_u${CURRENT_USER.id}_${key}` : 'momentum_'+key;
+  }
   function loadState(key, fallback){
     try{
-      const raw = localStorage.getItem('momentum_'+key);
+      const raw = localStorage.getItem(scopedKey(key));
       return raw !== null ? JSON.parse(raw) : fallback;
     }catch(e){ return fallback; }
   }
   function saveState(key, value){
-    try{ localStorage.setItem('momentum_'+key, JSON.stringify(value)); }catch(e){}
+    try{ localStorage.setItem(scopedKey(key), JSON.stringify(value)); }catch(e){}
   }
 
   /* ---------- STATE ----------
@@ -373,10 +386,14 @@
   }
 
   /* ---------- SETTINGS ---------- */
-  let userProfile = loadState('userProfile', { name:'Deodatta', email:'deodatta@example.com', photo:null });
+  let userProfile = loadState('userProfile', {
+    name: CURRENT_USER ? CURRENT_USER.name : 'there',
+    email: CURRENT_USER ? CURRENT_USER.email : '',
+    photo: null
+  });
 
   function applyAvatar(){
-    const initial = userProfile.name.charAt(0).toUpperCase();
+    const initial = (userProfile.name||'?').charAt(0).toUpperCase();
     [document.getElementById('settingsAvatar'), document.getElementById('sidebarAvatar')].forEach(el=>{
       if(!el) return;
       if(userProfile.photo){
@@ -389,6 +406,10 @@
         el.textContent = initial;
       }
     });
+    // Bug fix: the sidebar name used to only update after visiting Settings and
+    // saving; now it always reflects the logged-in user's actual name on load.
+    const nameEl = document.getElementById('sidebarName');
+    if(nameEl) nameEl.textContent = userProfile.name;
   }
 
   function handlePhotoUpload(event){
@@ -412,7 +433,7 @@
   }
 
   function saveProfile(){
-    const name = document.getElementById('s_name').value.trim() || 'Deodatta';
+    const name = document.getElementById('s_name').value.trim() || (CURRENT_USER ? CURRENT_USER.name : 'there');
     const email = document.getElementById('s_email').value.trim();
     userProfile.name = name;
     userProfile.email = email;
@@ -431,7 +452,14 @@
 
   function confirmDeleteAccount(){
     if(confirm('This will permanently delete your account and all data. This cannot be undone. Continue?')){
-      alert('Account deletion requested. (Demo only — nothing was actually deleted.)');
+      if(CURRENT_USER && window.MomentumAuth){
+        // Remove every namespaced key belonging to this user (habits, todos, notes, etc.)
+        const prefix = `momentum_u${CURRENT_USER.id}_`;
+        Object.keys(localStorage).filter(k=>k.startsWith(prefix)).forEach(k=>localStorage.removeItem(k));
+        MomentumAuth.deleteAccount(CURRENT_USER.id);
+      } else {
+        alert('Account deletion requested. (No active session found.)');
+      }
     }
   }
 

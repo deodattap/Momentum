@@ -2,10 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="refresh" content="0; url=login.html">
 <title>Momentum</title>
 </head>
 <body>
-<script>window.location.href = 'login.html';</script>
+<script src="js/auth.js"></script>
+<script>
+  window.location.href = (window.MomentumAuth && MomentumAuth.currentUser()) ? 'dashboard.html' : 'login.html';
+</script>
 </body>
 </html>

@@ -110,18 +110,19 @@
   }
   .btn-primary:hover{ background:var(--coral-dark); }
 
-  .divider{ display:flex; align-items:center; gap:12px; margin:22px 0; color:var(--ink-faint); font-size:12.5px; }
-  .divider::before, .divider::after{ content:''; flex:1; height:1px; background:var(--line); }
-
-  .btn-google{
-    width:100%; padding:11px; border-radius:12px; border:1.5px solid var(--line);
-    background:var(--white); display:flex; align-items:center; justify-content:center; gap:10px;
-    font-size:13.5px; font-weight:600; cursor:pointer; color:var(--ink);
-  }
-  .btn-google:hover{ border-color:var(--ink-faint); }
-
   .switch-line{ text-align:center; font-size:13px; color:var(--ink-soft); margin-top:24px; }
   .switch-line span{ color:var(--coral-dark); font-weight:600; cursor:pointer; }
+
+  .form-alert{
+    display:none; font-size:13px; font-weight:600; line-height:1.5;
+    padding:10px 14px; border-radius:10px; margin-bottom:16px;
+  }
+  .form-alert.show{ display:block; }
+  .form-alert.error{ background:rgba(232,80,31,0.1); color:var(--coral-dark); }
+  .form-alert.success{ background:rgba(191,217,180,0.35); color:#3F6B36; }
+  .field.invalid input{ border-color:var(--coral-dark); }
+  .field-error{ display:none; font-size:11.5px; color:var(--coral-dark); margin-top:5px; font-weight:600; }
+  .field.invalid .field-error{ display:block; }
 
   .view{ display:none; }
   .view.active{ display:block; }
@@ -143,9 +144,9 @@
   </div>
 
   <div class="brand-stats">
-    <div class="brand-stat"><div class="num">12K+</div><div class="label">habits tracked</div></div>
-    <div class="brand-stat"><div class="num">98%</div><div class="label">stay consistent</div></div>
-    <div class="brand-stat"><div class="num">4.9★</div><div class="label">user rating</div></div>
+    <div class="brand-stat"><div class="num">1K+</div><div class="label">habits tracked</div></div>
+    <div class="brand-stat"><div class="num">500+</div><div class="label">tasks completed</div></div>
+    <div class="brand-stat"><div class="num">100+</div><div class="label">goals achieved</div></div>
   </div>
 </div>
 
@@ -159,42 +160,137 @@
     <div id="login" class="view active">
       <h2>Welcome back</h2>
       <p class="sub">Log in to keep your streaks alive.</p>
-      <div class="field"><label>Email</label><input type="email" placeholder="you@example.com"></div>
-      <div class="field"><label>Password</label><input type="password" placeholder="••••••••"></div>
+      <div id="loginAlert" class="form-alert error"></div>
+      <div class="field" id="li_email_field">
+        <label>Email</label>
+        <input type="email" id="li_email" placeholder="you@example.com">
+        <div class="field-error" id="li_email_err"></div>
+      </div>
+      <div class="field" id="li_password_field">
+        <label>Password</label>
+        <input type="password" id="li_password" placeholder="••••••••">
+        <div class="field-error" id="li_password_err"></div>
+      </div>
       <div class="forgot">Forgot password?</div>
-      <button class="btn-primary" onclick="window.location.href='dashboard.html'">Log In</button>
-      <div class="divider">or</div>
-      <button class="btn-google">
-        <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.25 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0012 23z"/><path fill="#FBBC05" d="M5.84 14.09A6.6 6.6 0 015.5 12c0-.73.13-1.43.34-2.09V7.07H2.18A11 11 0 001 12c0 1.77.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1a11 11 0 00-9.82 6.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/></svg>
-        Continue with Google
-      </button>
+      <button class="btn-primary" onclick="handleLogin()">Log In</button>
       <div class="switch-line">New here? <span onclick="switchTab('signup')">Sign up</span></div>
     </div>
 
     <div id="signup" class="view">
       <h2>Create your account</h2>
       <p class="sub">Start building momentum today.</p>
-      <div class="field"><label>Name</label><input type="text" placeholder="Deodatta"></div>
-      <div class="field"><label>Email</label><input type="email" placeholder="you@example.com"></div>
-      <div class="field"><label>Password</label><input type="password" placeholder="••••••••"></div>
-      <div class="field"><label>Confirm Password</label><input type="password" placeholder="••••••••"></div>
-      <button class="btn-primary" style="margin-top:6px;" onclick="window.location.href='dashboard.html'">Sign Up</button>
-      <div class="divider">or</div>
-      <button class="btn-google">
-        <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.25 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0012 23z"/><path fill="#FBBC05" d="M5.84 14.09A6.6 6.6 0 015.5 12c0-.73.13-1.43.34-2.09V7.07H2.18A11 11 0 001 12c0 1.77.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1a11 11 0 00-9.82 6.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/></svg>
-        Continue with Google
-      </button>
+      <div id="signupAlert" class="form-alert error"></div>
+      <div class="field" id="su_name_field">
+        <label>Name</label>
+        <input type="text" id="su_name" placeholder="John Doe">
+        <div class="field-error" id="su_name_err"></div>
+      </div>
+      <div class="field" id="su_email_field">
+        <label>Email</label>
+        <input type="email" id="su_email" placeholder="john@example.com">
+        <div class="field-error" id="su_email_err"></div>
+      </div>
+      <div class="field" id="su_password_field">
+        <label>Password</label>
+        <input type="password" id="su_password" placeholder="••••••••">
+        <div class="field-error" id="su_password_err"></div>
+      </div>
+      <div class="field" id="su_confirm_field">
+        <label>Confirm Password</label>
+        <input type="password" id="su_confirm" placeholder="••••••••">
+        <div class="field-error" id="su_confirm_err"></div>
+      </div>
+      <button class="btn-primary" style="margin-top:6px;" onclick="handleSignup()">Sign Up</button>
       <div class="switch-line">Already have an account? <span onclick="switchTab('login')">Log in</span></div>
     </div>
   </div>
 </div>
 
+<script src="js/auth.js"></script>
 <script>
   function switchTab(name){
     document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     document.getElementById(name).classList.add('active');
     document.querySelectorAll('.tab')[name==='login'?0:1].classList.add('active');
+  }
+
+  // Already signed in? Skip straight past the login screen.
+  if(window.MomentumAuth && MomentumAuth.currentUser()){
+    window.location.href = 'dashboard.html';
+  }
+
+  function showAlert(id, message){
+    const el = document.getElementById(id);
+    el.textContent = message;
+    el.classList.add('show');
+  }
+  function clearAlert(id){
+    const el = document.getElementById(id);
+    el.textContent = '';
+    el.classList.remove('show');
+  }
+  function markField(fieldId, errId, message){
+    document.getElementById(fieldId).classList.add('invalid');
+    document.getElementById(errId).textContent = message;
+  }
+  function clearFieldErrors(fieldIds, errIds){
+    fieldIds.forEach(id=>document.getElementById(id).classList.remove('invalid'));
+    errIds.forEach(id=>document.getElementById(id).textContent = '');
+  }
+
+  function handleLogin(){
+    clearAlert('loginAlert');
+    clearFieldErrors(['li_email_field','li_password_field'], ['li_email_err','li_password_err']);
+
+    const email = document.getElementById('li_email').value.trim();
+    const password = document.getElementById('li_password').value;
+
+    let hasFieldError = false;
+    if(!email){ markField('li_email_field','li_email_err','Email is required.'); hasFieldError = true; }
+    else if(!MomentumAuth.isValidEmail(email)){ markField('li_email_field','li_email_err','Enter a valid email address.'); hasFieldError = true; }
+    if(!password){ markField('li_password_field','li_password_err','Password is required.'); hasFieldError = true; }
+    if(hasFieldError) return;
+
+    const result = MomentumAuth.login({ email, password });
+    if(!result.ok){
+      showAlert('loginAlert', result.message);
+      return;
+    }
+    window.location.href = 'dashboard.html';
+  }
+
+  function handleSignup(){
+    clearAlert('signupAlert');
+    clearFieldErrors(
+      ['su_name_field','su_email_field','su_password_field','su_confirm_field'],
+      ['su_name_err','su_email_err','su_password_err','su_confirm_err']
+    );
+
+    const name = document.getElementById('su_name').value.trim();
+    const email = document.getElementById('su_email').value.trim();
+    const password = document.getElementById('su_password').value;
+    const confirmPassword = document.getElementById('su_confirm').value;
+
+    let hasFieldError = false;
+    if(!name){ markField('su_name_field','su_name_err','Name is required.'); hasFieldError = true; }
+    if(!email){ markField('su_email_field','su_email_err','Email is required.'); hasFieldError = true; }
+    else if(!MomentumAuth.isValidEmail(email)){ markField('su_email_field','su_email_err','Enter a valid email address.'); hasFieldError = true; }
+    if(!password){ markField('su_password_field','su_password_err','Password is required.'); hasFieldError = true; }
+    else{
+      const pwIssue = MomentumAuth.passwordIssue(password);
+      if(pwIssue){ markField('su_password_field','su_password_err',pwIssue); hasFieldError = true; }
+    }
+    if(!confirmPassword){ markField('su_confirm_field','su_confirm_err','Please confirm your password.'); hasFieldError = true; }
+    else if(password && confirmPassword !== password){ markField('su_confirm_field','su_confirm_err','Passwords do not match.'); hasFieldError = true; }
+    if(hasFieldError) return;
+
+    const result = MomentumAuth.signup({ name, email, password, confirmPassword });
+    if(!result.ok){
+      showAlert('signupAlert', result.message);
+      return;
+    }
+    window.location.href = 'dashboard.html';
   }
 </script>
 
