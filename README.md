@@ -95,20 +95,20 @@ It was built to demonstrate practical front-end engineering: state management, p
 
 ```
 Momentum/
-├── index.html          # Entry point — redirects to login/dashboard
-├── login.html           # Sign up / log in
-├── dashboard.html        # Home — overview cards, live stats, greeting
-├── habits.html           # Habit tracker with heatmap strips
-├── todos.html            # Task manager
-├── notes.html             # Rich-text notes with export/share
+├── index.html              # Entry point — redirects to login/dashboard
+├── login.html              # Sign up / log in
+├── dashboard.html          # Home — overview cards, live stats, greeting
+├── habits.html             # Habit tracker with heatmap strips
+├── todos.html              # Task manager
+├── notes.html              # Rich-text notes with export/share
 ├── analytics.html          # Charts, trends, per-habit breakdown
 ├── rewards.html            # XP, levels, badges
-├── settings.html            # Profile, theme, account management
+├── settings.html           # Profile, theme, account management
 ├── css/
-│   └── style.css             # Full design system + all page styles
+│   └── style.css           # Full design system + all page styles
 └── js/
-    ├── app.js                  # Core app logic — state, rendering, all features
-    └── auth.js                  # Self-contained auth module (signup/login/session)
+    ├── app.js              # Core app logic — state, rendering, all features
+    └── auth.js             # Self-contained auth module (signup/login/session)
 ```
 
 ---
